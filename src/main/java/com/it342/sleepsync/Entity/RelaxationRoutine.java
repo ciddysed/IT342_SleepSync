@@ -20,7 +20,7 @@ public class RelaxationRoutine {
     private LocalTime routineStartTime;
 
     @ManyToOne
-    @JoinColumn(name = "userID", nullable = false)
+    @JoinColumn(name = "user_id", nullable = false) // Correct foreign key column name
     private User user;
 
     // Getters

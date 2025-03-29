@@ -1,12 +1,12 @@
 package com.it342.sleepsync.Entity;
 
 import java.time.LocalTime;
-
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.JoinColumn;
 
 @Entity
 public class SleepSchedule {
@@ -22,6 +22,7 @@ public class SleepSchedule {
     private LocalTime preferredWakeTime;
 
     @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false) // Foreign key to User
     private User user;
 
     // Getters

@@ -18,7 +18,17 @@ public class UserService {
 
     @Transactional
     public User createUser(User user) {
-        return userRepository.save(user);
+        try {
+            // Ensure all required fields are set
+            if (user.getEmail() == null || user.getPassword() == null) {
+                throw new IllegalArgumentException("Email and password are required.");
+            }
+            // Save user and cascade relationships
+            return userRepository.save(user);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     public Optional<User> getUserById(Long id) {
@@ -35,11 +45,22 @@ public class UserService {
         user.setEmail(userDetails.getEmail());
         user.setFirstName(userDetails.getFirstName());
         user.setLastName(userDetails.getLastName());
+        // Update relationships if needed
+        user.setSleepTracks(userDetails.getSleepTracks());
+        user.setRelaxationRoutines(userDetails.getRelaxationRoutines());
         return userRepository.save(user);
     }
 
     @Transactional
     public void deleteUser(Long id) {
         userRepository.deleteById(id);
+    }
+
+    public Optional<User> validateLogin(String email, String password) {
+        Optional<User> user = userRepository.findByEmail(email);
+        if (user.isPresent() && user.get().getPassword().equals(password)) {
+            return user;
+        }
+        return Optional.empty();
     }
 }
