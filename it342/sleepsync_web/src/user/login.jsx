@@ -20,7 +20,7 @@ const Login = () => {
                     localStorage.setItem("userId", user.userID); // Store userId in localStorage
                     console.log("Logged in userId:", user.userID); // Log userId for verification
                     setError("");
-                    navigate("/user/sleep-schedule"); // Navigate to sleep schedule page
+                    navigate("/user/landing"); // Navigate to landing page
                 } else {
                     setError("Login failed. User ID not found.");
                 }

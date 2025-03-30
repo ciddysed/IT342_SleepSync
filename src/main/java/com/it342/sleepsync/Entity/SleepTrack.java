@@ -8,6 +8,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Column;
 
 @Entity
 public class SleepTrack {
@@ -21,10 +22,13 @@ public class SleepTrack {
     private User user;
 
     private LocalDate date;
-    private Double sleepDuration;
-    private String sleepQuality;
-    private String sleepStages;
+    private String sleepTime; // Changed from sleepQuality
+    private String wakeTime; // Changed from sleepStages
+    private Double sleepDuration; // Retained as is
     private Integer scheduleId;
+
+    @Column(columnDefinition = "TEXT")
+    private String tasks; // Stores tasks as a JSON string
 
     // Getters
     public Long getTrackingId() {
@@ -39,20 +43,24 @@ public class SleepTrack {
         return date;
     }
 
+    public String getSleepTime() {
+        return sleepTime;
+    }
+
+    public String getWakeTime() {
+        return wakeTime;
+    }
+
     public Double getSleepDuration() {
         return sleepDuration;
     }
 
-    public String getSleepQuality() {
-        return sleepQuality;
-    }
-
-    public String getSleepStages() {
-        return sleepStages;
-    }
-
     public Integer getScheduleId() {
         return scheduleId;
+    }
+
+    public String getTasks() {
+        return tasks;
     }
 
     // Setters
@@ -68,20 +76,24 @@ public class SleepTrack {
         this.date = date;
     }
 
+    public void setSleepTime(String sleepTime) {
+        this.sleepTime = sleepTime;
+    }
+
+    public void setWakeTime(String wakeTime) {
+        this.wakeTime = wakeTime;
+    }
+
     public void setSleepDuration(Double sleepDuration) {
         this.sleepDuration = sleepDuration;
     }
 
-    public void setSleepQuality(String sleepQuality) {
-        this.sleepQuality = sleepQuality;
-    }
-
-    public void setSleepStages(String sleepStages) {
-        this.sleepStages = sleepStages;
-    }
-
     public void setScheduleId(Integer scheduleId) {
         this.scheduleId = scheduleId;
+    }
+
+    public void setTasks(String tasks) {
+        this.tasks = tasks;
     }
 
     // No-args constructor

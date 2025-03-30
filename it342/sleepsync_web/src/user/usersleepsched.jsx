@@ -79,6 +79,30 @@ const UserSleepSchedule = () => {
         }
     };
 
+    const recordSleepTime = async (userId, sleepTime, wakeTime) => {
+        const sleepTrackData = {
+            userId,
+            sleepTime,
+            wakeTime,
+        };
+
+        try {
+            const response = await fetch("http://localhost:8080/sleep-tracks/record_sleep_time", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(sleepTrackData),
+            });
+
+            if (response.ok) {
+                console.log("Sleep time recorded successfully.");
+            } else {
+                console.error("Failed to record sleep time. Status:", response.status);
+            }
+        } catch (error) {
+            console.error("Error recording sleep time:", error);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
         setSleepSchedule({ ...sleepSchedule, [name]: value });
@@ -100,6 +124,8 @@ const UserSleepSchedule = () => {
 
             if (response.ok) {
                 setMessage(isEditing ? "Sleep schedule updated successfully!" : "Sleep schedule created successfully!");
+                // Call recordSleepTime after successfully saving the schedule
+                await recordSleepTime(userId, sleepSchedule.sleepTime, sleepSchedule.wakeTime);
             } else {
                 setMessage("Failed to save sleep schedule.");
             }
