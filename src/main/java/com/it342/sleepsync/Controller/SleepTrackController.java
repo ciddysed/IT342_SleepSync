@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Autowired; // Import the User class
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.it342.sleepsync.Entity.SleepTrack;
+import com.it342.sleepsync.Entity.User;
 import com.it342.sleepsync.Service.SleepTrackService;
 
 @RestController
@@ -35,10 +36,15 @@ public class SleepTrackController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SleepTrack> getSleepTrackById(@PathVariable Long id) {
-        return sleepTrackService.getSleepTrackById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    public ResponseEntity<List<SleepTrack>> getAllSleepTracksByUser(@PathVariable Long id) {
+        try {
+            User user = new User(id); // Ensure the User object is properly created
+            List<SleepTrack> sleepTracks = sleepTrackService.getAllSleepTracksByUser(user);
+            return ResponseEntity.ok(sleepTracks);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body(null);
+        }
     }
 
     @GetMapping
@@ -58,8 +64,8 @@ public class SleepTrackController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/record_sleep_time")
-    public ResponseEntity<?> recordSleepTime(@RequestBody Map<String, String> payload) {
+    @PostMapping("/record_sleep_time/{id}")
+    public ResponseEntity<?> recordSleepTime(@PathVariable Long id, @RequestBody Map<String, String> payload) {
         try {
             String sleepTime = payload.get("sleep_time");
             String wakeTime = payload.get("wake_time");
@@ -82,6 +88,7 @@ public class SleepTrackController {
 
             // Store sleep record and tasks
             SleepTrack sleepTrack = new SleepTrack();
+            sleepTrack.setUser(new User(id)); // Ensure the User object is properly set
             sleepTrack.setDate(date);
             sleepTrack.setSleepTime(sleepTime);
             sleepTrack.setWakeTime(wakeTime);

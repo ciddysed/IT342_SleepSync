@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Chart } from 'chart.js/auto';
+import axios from 'axios'; // Added axios import
 
 const RecordSleep = () => {
     const [sleepDurations, setSleepDurations] = useState([]);
@@ -16,6 +17,7 @@ const RecordSleep = () => {
     const [showDoneButton, setShowDoneButton] = useState(false);
     const [showFireworks, setShowFireworks] = useState(false);
     const [allTasksChecked, setAllTasksChecked] = useState(false);
+    const [sleepRecords, setSleepRecords] = useState([]);
 
     const prompts = [
         "Great job! Keep tracking your sleep.",
@@ -33,7 +35,7 @@ const RecordSleep = () => {
         }
     }, [taskCards]);
 
-    const handleSleepFormSubmit = (event) => {
+    const handleSleepFormSubmit = async (event) => {
         event.preventDefault();
         const sleepDateTime = new Date(`${sleepDate}T${sleepTime}:00`);
         const wakeDateTime = new Date(`${sleepDate}T${wakeTime}:00`);
@@ -42,38 +44,44 @@ const RecordSleep = () => {
         }
         const sleepDuration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
 
-        fetch("http://localhost:8080/sleep-tracks/record_sleep_time", {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                sleep_time: sleepTime,
-                wake_time: wakeTime,
-                date: sleepDate,
-            }),
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.status === 'success') {
-                setTaskCards(data.task_cards);
-                setShowDoneButton(true);
-                setSleepDate('');
-                setSleepTime('');
-                setWakeTime('');
+        const userId = localStorage.getItem("userId"); // Ensure userId is valid
+        if (!userId) {
+            alert("User not logged in. Please log in to record sleep.");
+            return;
+        }
+
+        const sleepTrackData = {
+            sleep_time: sleepTime,
+            wake_time: wakeTime,
+            date: sleepDate,
+        };
+
+        try {
+            const response = await fetch(`http://localhost:8080/sleep-tracks/record_sleep_time/${userId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(sleepTrackData),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.status === "success") {
+                    setTaskCards(data.task_cards);
+                    setShowDoneButton(true);
+                    setSleepDate('');
+                    setSleepTime('');
+                    setWakeTime('');
+                } else {
+                    alert("Failed to record sleep time.");
+                }
             } else {
-                alert('Failed to record sleep time.');
+                console.error("Failed to record sleep time. Status:", response.status);
+                alert("An error occurred while recording sleep time. Please try again.");
             }
-        })
-        .catch(error => {
-            console.error("Error during POST request:", error);
+        } catch (error) {
+            console.error("Error recording sleep time:", error);
             alert("An error occurred while recording sleep time. Please try again.");
-        });
+        }
     };
 
     const handleDoneButtonClick = () => {
@@ -91,11 +99,30 @@ const RecordSleep = () => {
         }
     };
 
-    const handleTrackProgressButtonClick = () => {
-        showModal();
+    const handleTrackProgressButtonClick = async () => {
+        try {
+            const userId = localStorage.getItem("userId");
+            if (!userId) {
+                alert("User not logged in. Please log in to view sleep progress.");
+                return;
+            }
+
+            const response = await fetch(`http://localhost:8080/sleep-tracks/${userId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setSleepRecords(data);
+                showModal(data);
+            } else {
+                console.error("Failed to fetch sleep records. Status:", response.status);
+                alert("An error occurred while fetching sleep records.");
+            }
+        } catch (error) {
+            console.error("Error fetching sleep records:", error);
+            alert("An error occurred while fetching sleep records.");
+        }
     };
 
-    const showModal = () => {
+    const showModal = (records) => {
         const modal = document.getElementById('sleepModal');
         modal.style.display = 'flex';
 
@@ -110,15 +137,14 @@ const RecordSleep = () => {
             }
         };
 
-        if (sleepChart) {
-            sleepChart.destroy();
-        }
-        if (sleepLineChart) {
-            sleepLineChart.destroy();
-        }
-        if (sleepAreaChart) {
-            sleepAreaChart.destroy();
-        }
+        const dates = records.map(record => record.date);
+        const sleepDurations = records.map(record => record.sleepDuration);
+        const sleepTimes = records.map(record => record.sleepTime);
+        const wakeTimes = records.map(record => record.wakeTime);
+
+        if (sleepChart) sleepChart.destroy();
+        if (sleepLineChart) sleepLineChart.destroy();
+        if (sleepAreaChart) sleepAreaChart.destroy();
 
         const ctxBar = document.getElementById('sleepChart').getContext('2d');
         setSleepChart(new Chart(ctxBar, {
@@ -133,13 +159,7 @@ const RecordSleep = () => {
                     borderWidth: 1
                 }]
             },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
+            options: { scales: { y: { beginAtZero: true } } }
         }));
 
         const ctxLine = document.getElementById('sleepLineChart').getContext('2d');
@@ -156,13 +176,7 @@ const RecordSleep = () => {
                     fill: true
                 }]
             },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
+            options: { scales: { y: { beginAtZero: true } } }
         }));
 
         const ctxArea = document.getElementById('sleepAreaChart').getContext('2d');
@@ -179,16 +193,16 @@ const RecordSleep = () => {
                     fill: true
                 }]
             },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
-                    }
-                }
-            }
+            options: { scales: { y: { beginAtZero: true } } }
         }));
 
-        updateReports();
+        const avgSleepDuration = (sleepDurations.reduce((a, b) => a + b, 0) / sleepDurations.length).toFixed(2);
+        const avgSleepTime = calculateAverageTime(sleepTimes);
+        const avgWakeTime = calculateAverageTime(wakeTimes);
+
+        document.getElementById('avgSleepDuration').innerText = avgSleepDuration;
+        document.getElementById('avgSleepTime').innerText = avgSleepTime;
+        document.getElementById('avgWakeTime').innerText = avgWakeTime;
     };
 
     const updateReports = () => {

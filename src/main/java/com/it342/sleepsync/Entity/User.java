@@ -2,6 +2,9 @@ package com.it342.sleepsync.Entity;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,8 +13,6 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @JsonInclude(JsonInclude.Include.NON_NULL) // Include only non-null fields in JSON
@@ -36,6 +37,15 @@ public class User {
     @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<RelaxationRoutine> relaxationRoutines;
+
+    // Constructor with userID
+    public User(Long userID) {
+        this.userID = userID;
+    }
+
+    // No-args constructor
+    public User() {
+    }
 
     // Getters
     public Long getUserID() {
@@ -93,9 +103,5 @@ public class User {
 
     public void setRelaxationRoutines(List<RelaxationRoutine> relaxationRoutines) {
         this.relaxationRoutines = relaxationRoutines;
-    }
-
-    // No-args constructor
-    public User() {
     }
 }

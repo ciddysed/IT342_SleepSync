@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.it342.sleepsync.Entity.SleepTrack;
+import com.it342.sleepsync.Entity.User;
 import com.it342.sleepsync.Repository.SleepTrackRepository;
 
 @Service
@@ -29,6 +30,10 @@ public class SleepTrackService {
 
     public List<SleepTrack> getAllSleepTracks() {
         return sleepTrackRepository.findAll();
+    }
+
+    public List<SleepTrack> getAllSleepTracksByUser(User user) {
+        return sleepTrackRepository.findByUser(user);
     }
 
     @Transactional
