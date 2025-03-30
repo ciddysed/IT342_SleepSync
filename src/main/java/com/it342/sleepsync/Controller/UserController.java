@@ -58,14 +58,14 @@ public class UserController {
 
     @GetMapping("/login")
     public ResponseEntity<?> loginUser(
-            @RequestParam String username,
+            @RequestParam String email, // Changed from username to email
             @RequestParam String password) {
         try {
-            Optional<User> user = userService.validateLogin(username, password);
+            Optional<User> user = userService.validateLogin(email, password); // Pass email instead of username
             if (user.isPresent()) {
-                return ResponseEntity.ok("Logged in successfully");
+                return ResponseEntity.ok(user.get()); // Ensure the user object contains the id field
             } else {
-                return ResponseEntity.status(401).body("Invalid username or password.");
+                return ResponseEntity.status(401).body("Invalid email or password."); // Updated error message
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -35,7 +35,7 @@ const Register = () => {
     };
 
     return (
-        <div className="dynamic-gradient">
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "100vh", background: "linear-gradient(to bottom right, #1a202c, #2d3748)" }}>
             <div style={{ backgroundColor: "#2d3748", padding: "2rem", borderRadius: "10px", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)", width: "400px" }}>
                 <div style={{ textAlign: "center", marginBottom: "1rem" }}>
                     <h1 style={{ fontSize: "1.5rem", fontWeight: "bold", color: "white" }}>SleepSync</h1>

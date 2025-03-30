@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 
 const UserSleepSchedule = () => {
@@ -15,29 +15,67 @@ const UserSleepSchedule = () => {
     const [isEditing, setIsEditing] = useState(false);
     const [message, setMessage] = useState("");
 
-    useEffect(() => {
-        // Check if the user is logged in
-        const storedUserId = localStorage.getItem("userId");
-        if (!storedUserId) {
-            navigate("/login"); // Redirect to login if not logged in
-        } else {
-            setUserId(storedUserId);
-            fetchSleepSchedule(storedUserId);
-        }
-    }, [navigate]);
-
-    const fetchSleepSchedule = async (userId) => {
+    const fetchSleepSchedule = useCallback(async (userId) => {
+        console.log("Fetching sleep schedule for userId:", userId); // Log userId before API call
         try {
             const response = await fetch(`http://localhost:8080/api/sleep-schedules/user/${userId}`);
             if (response.ok) {
                 const data = await response.json();
+                console.log("Fetched sleep schedule data:", data); // Log fetched data for verification
                 if (data.length > 0) {
                     setSleepSchedule(data[0]); // Assuming only one schedule per user
                     setIsEditing(true);
+                } else {
+                    console.log("No sleep schedule found. Creating a new one."); // Log creation of new schedule
+                    await createDefaultSleepSchedule(userId); // Create a default sleep schedule
                 }
+            } else {
+                console.error("Failed to fetch sleep schedule. Status:", response.status);
             }
         } catch (error) {
             console.error("Error fetching sleep schedule:", error);
+        }
+    }, []); // Empty dependency array ensures the function is stable
+
+    useEffect(() => {
+        // Check if the user is logged in
+        const storedUserId = localStorage.getItem("userId");
+        if (!storedUserId || storedUserId === "undefined" || storedUserId === null) { // Handle undefined or null userId
+            console.error("Invalid userId retrieved from localStorage:", storedUserId); // Log error
+            localStorage.removeItem("userId"); // Clear invalid userId from localStorage
+            navigate("/login"); // Redirect to login if not logged in
+        } else {
+            console.log("Retrieved userId from localStorage:", storedUserId); // Log userId for verification
+            setUserId(storedUserId);
+            fetchSleepSchedule(storedUserId); // Call the stable function
+        }
+    }, [navigate, fetchSleepSchedule]); // Add fetchSleepSchedule to the dependency array
+
+    const createDefaultSleepSchedule = async (userId) => {
+        const defaultSchedule = {
+            isActive: true,
+            isStaff: false,
+            sleepGoals: "Default sleep goal",
+            sleepTime: "22:00",
+            wakeTime: "06:00",
+            preferredWakeTime: "06:30",
+        };
+        try {
+            const response = await fetch(`http://localhost:8080/api/sleep-schedules/user/${userId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(defaultSchedule),
+            });
+            if (response.ok) {
+                const createdSchedule = await response.json();
+                console.log("Created default sleep schedule:", createdSchedule); // Log created schedule
+                setSleepSchedule(createdSchedule);
+                setIsEditing(true);
+            } else {
+                console.error("Failed to create default sleep schedule. Status:", response.status);
+            }
+        } catch (error) {
+            console.error("Error creating default sleep schedule:", error);
         }
     };
 

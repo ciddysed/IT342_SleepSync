@@ -12,6 +12,7 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/sleep-schedules")
+@CrossOrigin(origins = "http://localhost:3000") // Allow requests from the frontend
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "sleepTracks"})
 public class SleepScheduleController {
 
