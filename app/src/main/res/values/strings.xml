@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">SleepSync Mobile</string>
+    <string name="hello_sleepsync">Hello, SleepSync!</string>
+    <string name="click_me">Click Me</string>
+    <string name="sleepsync_logo">SleepSync Logo</string>
+    <string name="sleepsync">SLEEPSYNC</string>
+    <string name="get_started">GET STARTED</string>
+    <string name="sleepsync_logo2">SleepSync Logo2</string>
+    <string name="login_your_account">LOGIN YOUR ACCOUNT</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="don_t_have_an_account">Don\'t Have an Account?</string>
+    <string name="login">LOGIN</string>
+    <string name="register_here">Register Here.</string>
+    <string name="forgot_password">Forgot Password?</string>
+    <string name="remember_me">Remember Me?</string>
+    <string name="forgot_password2">Forgot Password?</string>
+    <string name="remember_me2">Remember Me?</string>
+</resources>
