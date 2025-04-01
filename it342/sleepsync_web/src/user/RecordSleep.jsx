@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Chart } from 'chart.js/auto';
-import axios from 'axios'; // Added axios import
+import axios from 'axios';
+import './RecordSleep.css'; // Import your CSS file
 
 const RecordSleep = () => {
     const [sleepDurations, setSleepDurations] = useState([]);
@@ -18,6 +19,7 @@ const RecordSleep = () => {
     const [showFireworks, setShowFireworks] = useState(false);
     const [allTasksChecked, setAllTasksChecked] = useState(false);
     const [sleepRecords, setSleepRecords] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const prompts = [
         "Great job! Keep tracking your sleep.",
@@ -35,6 +37,27 @@ const RecordSleep = () => {
         }
     }, [taskCards]);
 
+    useEffect(() => {
+        if (isModalOpen) {
+            const closeButton = document.querySelector('.close');
+            const modal = document.getElementById('sleepModal');
+
+            const handleClickOutside = (event) => {
+                if (event.target === modal) {
+                    closeModal();
+                }
+            };
+
+            closeButton.addEventListener('click', closeModal);
+            window.addEventListener('click', handleClickOutside);
+
+            return () => {
+                closeButton.removeEventListener('click', closeModal);
+                window.removeEventListener('click', handleClickOutside);
+            };
+        }
+    }, [isModalOpen]);
+
     const handleSleepFormSubmit = async (event) => {
         event.preventDefault();
         const sleepDateTime = new Date(`${sleepDate}T${sleepTime}:00`);
@@ -44,7 +67,7 @@ const RecordSleep = () => {
         }
         const sleepDuration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
 
-        const userId = localStorage.getItem("userId"); // Ensure userId is valid
+        const userId = localStorage.getItem("userId");
         if (!userId) {
             alert("User not logged in. Please log in to record sleep.");
             return;
@@ -112,6 +135,7 @@ const RecordSleep = () => {
                 const data = await response.json();
                 setSleepRecords(data);
                 showModal(data);
+                setIsModalOpen(true);
             } else {
                 console.error("Failed to fetch sleep records. Status:", response.status);
                 alert("An error occurred while fetching sleep records.");
@@ -122,21 +146,11 @@ const RecordSleep = () => {
         }
     };
 
+    const closeModal = () => {
+        setIsModalOpen(false);
+    };
+
     const showModal = (records) => {
-        const modal = document.getElementById('sleepModal');
-        modal.style.display = 'flex';
-
-        const closeModal = () => {
-            modal.style.display = 'none';
-        };
-
-        document.querySelector('.close').addEventListener('click', closeModal);
-        window.onclick = (event) => {
-            if (event.target === modal) {
-                closeModal();
-            }
-        };
-
         const dates = records.map(record => record.date);
         const sleepDurations = records.map(record => record.sleepDuration);
         const sleepTimes = records.map(record => record.sleepTime);
@@ -242,7 +256,7 @@ const RecordSleep = () => {
                 <div className="nav-content">
                     <a href="/landing_page" className="nav-logo">
                         <svg viewBox="0 0 24 24">
-                            <path d="M19 7h-8v8H3V7H1v10h2v3c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-3h2V7h-2zM7 19h10v-6H7v6z"/>
+                            <path d="M19 7h-8v8H3V7H1v10h2v3c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-3h2V7h-2zM7 19h10v-6H7v6z" />
                         </svg>
                         <span>SleepSync</span>
                     </a>
@@ -259,15 +273,18 @@ const RecordSleep = () => {
                         <button id="track-progress-button" onClick={handleTrackProgressButtonClick}>Track Sleep Progress</button>
                     </div>
                     <form id="sleep-form" onSubmit={handleSleepFormSubmit}>
-                        <label htmlFor="date">Date</label>
-                        <input type="date" id="date" name="date" value={sleepDate} onChange={(e) => setSleepDate(e.target.value)} required />
-
-                        <label htmlFor="sleep_time">Sleep Time</label>
-                        <input type="time" id="sleep_time" name="sleep_time" value={sleepTime} onChange={(e) => setSleepTime(e.target.value)} required />
-
-                        <label htmlFor="wake_time">Wake Time</label>
-                        <input type="time" id="wake_time" name="wake_time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} required />
-
+                        <div className="form-group">
+                            <label htmlFor="date">Date</label>
+                            <input type="date" id="date" name="date" value={sleepDate} onChange={(e) => setSleepDate(e.target.value)} required />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="sleep_time">Sleep Time</label>
+                            <input type="time" id="sleep_time" name="sleep_time" value={sleepTime} onChange={(e) => setSleepTime(e.target.value)} required />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="wake_time">Wake Time</label>
+                            <input type="time" id="wake_time" name="wake_time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} required />
+                        </div>
                         <button type="submit" id="save-button">Save</button>
                     </form>
                     <div id="task-cards-container" dangerouslySetInnerHTML={{ __html: taskCards }} />
@@ -275,7 +292,7 @@ const RecordSleep = () => {
                 </div>
             </div>
 
-            <div id="sleepModal" className="modal">
+            <div id="sleepModal" className="modal" style={{ display: isModalOpen ? 'flex' : 'none' }}>
                 <div className="modal-content">
                     <div className="modal-header">
                         <h2>Sleep Analysis Dashboard</h2>
@@ -321,6 +338,8 @@ const RecordSleep = () => {
 
             {showFireworks && (
                 <div id="fireworks-container" className="fireworks-container">
+                    <div className="firework"></div>
+                    <div className="firework"></div>
                     <div className="firework"></div>
                     <div className="firework"></div>
                     <div className="firework"></div>
