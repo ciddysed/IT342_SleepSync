@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.it342.sleepsync.Entity.SleepTrack;
@@ -104,5 +105,20 @@ public class SleepTrackController {
             e.printStackTrace(); // Log the error for debugging
             return ResponseEntity.status(500).body("An unexpected error occurred: " + e.getMessage());
         }
+    }
+
+    @GetMapping("/user/{userId}/years")
+    public ResponseEntity<List<Integer>> getDistinctYears(@PathVariable Long userId) {
+        List<Integer> years = sleepTrackService.getDistinctYearsByUser(userId);
+        return ResponseEntity.ok(years);
+    }
+
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<SleepTrack>> getSleepDataByYearAndMonth(
+            @PathVariable Long userId,
+            @RequestParam int year,
+            @RequestParam int month) {
+        List<SleepTrack> sleepData = sleepTrackService.getSleepDataByYearAndMonth(userId, year, month);
+        return ResponseEntity.ok(sleepData);
     }
 }

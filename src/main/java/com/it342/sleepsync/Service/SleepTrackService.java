@@ -98,4 +98,20 @@ public class SleepTrackService {
         }
         return html.toString();
     }
+
+    public List<Integer> getDistinctYears() {
+        return sleepTrackRepository.findDistinctYears();
+    }
+
+    public List<SleepTrack> getSleepDataByYearAndMonth(int year, int month) {
+        return sleepTrackRepository.findByYearAndMonth(year, month);
+    }
+
+    public List<Integer> getDistinctYearsByUser(Long userId) {
+        return sleepTrackRepository.findDistinctYearsByUser(userId);
+    }
+
+    public List<SleepTrack> getSleepDataByYearAndMonth(Long userId, int year, int month) {
+        return sleepTrackRepository.findByUserAndYearAndMonth(userId, year, month);
+    }
 }

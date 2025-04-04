@@ -25,7 +25,7 @@ public class SleepTrack {
     private String sleepTime; // Changed from sleepQuality
     private String wakeTime; // Changed from sleepStages
     private Double sleepDuration; // Retained as is
-    private Integer scheduleId;
+    private Integer scheduleId; 
 
     @Column(columnDefinition = "TEXT")
     private String tasks; // Stores tasks as a JSON string

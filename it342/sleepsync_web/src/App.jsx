@@ -5,6 +5,7 @@ import Register from "./user/register";
 import UserSleepSchedule from "./user/usersleepsched";
 import Landing from "./user/landing";
 import RecordSleep from "./user/RecordSleep";
+import UserSleepProgress from "./user/UserSleepProgress"; // Import UserSleepProgress
 
 const App = () => {
     return (
@@ -15,6 +16,7 @@ const App = () => {
                 <Route path="/user/sleep-schedule" element={<UserSleepSchedule />} />
                 <Route path="/user/landing" element={<Landing />} />
                 <Route path="/user/record-sleep" element={<RecordSleep />} />
+                <Route path="/user/sleep-progress" element={<UserSleepProgress />} /> {/* Add UserSleepProgress path */}
                 <Route path="*" element={<div>Page not found</div>} /> {/* Fallback route */}
             </Routes>
         </Router>
