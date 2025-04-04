@@ -2,6 +2,91 @@ import React, { useState, useEffect } from 'react';
 import { Chart } from 'chart.js/auto';
 import './RecordSleep.css';
 
+const sleepCategories = [
+    {
+        range: "Less than 4 hours",
+        pros: "None",
+        cons: "Severe fatigue, impaired judgment",
+        healthIssues: "Increased risk of heart disease, diabetes",
+        cognitiveEffects: "Poor memory, reduced focus",
+        productivityImpact: "Low efficiency, high burnout risk",
+        recommendedFor: "Not recommended for anyone",
+    },
+    {
+        range: "4–6 hours",
+        pros: "Short-term productivity boost",
+        cons: "Chronic sleep debt, stress",
+        healthIssues: "Weakened immune system, weight gain",
+        cognitiveEffects: "Slower reaction times, poor decision-making",
+        productivityImpact: "Unsustainable over time",
+        recommendedFor: "Emergency workers, short-term deadlines",
+    },
+    {
+        range: "7–9 hours",
+        pros: "Optimal energy, improved mood",
+        cons: "None for most people",
+        healthIssues: "Reduced risk of chronic diseases",
+        cognitiveEffects: "Enhanced memory and focus",
+        productivityImpact: "High efficiency, balanced workload",
+        recommendedFor: "Students, professionals, athletes",
+    },
+    {
+        range: "More than 9 hours",
+        pros: "Recovery for sleep-deprived individuals",
+        cons: "Grogginess, potential oversleeping effects",
+        healthIssues: "Linked to depression, obesity",
+        cognitiveEffects: "Diminished alertness",
+        productivityImpact: "Reduced daytime activity",
+        recommendedFor: "Recovering from illness or extreme fatigue",
+    },
+];
+
+const getSleepCategory = (duration) => {
+    if (duration < 4) return sleepCategories[0];
+    if (duration >= 4 && duration < 7) return sleepCategories[1];
+    if (duration >= 7 && duration <= 9) return sleepCategories[2];
+    if (duration > 9) return sleepCategories[3];
+    return null;
+};
+
+const SleepInsights = ({ duration }) => {
+    const category = getSleepCategory(duration);
+
+    if (!category) return null;
+
+    return (
+        <div className="mt-6">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center">Sleep Insights</h2>
+            <div className="flex flex-wrap justify-center gap-6">
+                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
+                    <h3 className="font-semibold text-green-400 mb-2">Pros</h3>
+                    <p className="text-gray-300 text-center">{category.pros}</p>
+                </div>
+                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
+                    <h3 className="font-semibold text-red-400 mb-2">Cons</h3>
+                    <p className="text-gray-300 text-center">{category.cons}</p>
+                </div>
+                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
+                    <h3 className="font-semibold text-gray-400 mb-2">Health Issues</h3>
+                    <p className="text-gray-300 text-center">{category.healthIssues}</p>
+                </div>
+                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
+                    <h3 className="font-semibold text-gray-400 mb-2">Cognitive Effects</h3>
+                    <p className="text-gray-300 text-center">{category.cognitiveEffects}</p>
+                </div>
+                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
+                    <h3 className="font-semibold text-gray-400 mb-2">Productivity Impact</h3>
+                    <p className="text-gray-300 text-center">{category.productivityImpact}</p>
+                </div>
+                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
+                    <h3 className="font-semibold text-gray-400 mb-2">Recommended For</h3>
+                    <p className="text-gray-300 text-center">{category.recommendedFor}</p>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const RecordSleep = () => {
     const [sleepChart, setSleepChart] = useState(null);
     const [sleepLineChart, setSleepLineChart] = useState(null);
@@ -16,6 +101,9 @@ const RecordSleep = () => {
     const [sleepRecords, setSleepRecords] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('durationOverTime');
+    const [showSleepChart, setShowSleepChart] = useState(false); // New state to control chart visibility
+    const [sleepDuration, setSleepDuration] = useState(null); // Track sleep duration
+    const [showInsights, setShowInsights] = useState(false); // Control insights visibility
 
     useEffect(() => {
         if (taskCards) {
@@ -53,9 +141,10 @@ const RecordSleep = () => {
                 wakeDateTime.setDate(wakeDateTime.getDate() + 1);
             }
 
-            const sleepDuration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
-
-            if (sleepDuration < 0) {
+            const duration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
+            if (duration >= 0) {
+                setSleepDuration(duration); // Update sleep duration
+            } else {
                 alert("Wake date and time must be after sleep date and time.");
                 setWakeDate('');
                 setWakeTime('');
@@ -73,7 +162,7 @@ const RecordSleep = () => {
             wakeDateTime.setDate(wakeDateTime.getDate() + 1);
         }
 
-        const sleepDuration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
+        const duration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
 
         const userId = localStorage.getItem("userId");
         if (!userId) {
@@ -86,7 +175,7 @@ const RecordSleep = () => {
             wake_time: wakeTime,
             date: sleepDate,
             wake_date: wakeDate,
-            sleep_duration: sleepDuration,
+            sleep_duration: duration,
         };
 
         try {
@@ -105,6 +194,9 @@ const RecordSleep = () => {
                     setSleepTime('');
                     setWakeTime('');
                     setWakeDate('');
+                    setSleepDuration(duration); // Update sleep duration
+                    setShowInsights(true); // Show insights after saving
+                    setShowSleepChart(true); // Show the chart after saving a record
                 } else {
                     alert("Failed to record sleep time.");
                 }
@@ -439,6 +531,9 @@ const RecordSleep = () => {
                     </form>
                     <div id="task-cards-container" dangerouslySetInnerHTML={{ __html: taskCards }} />
                     {showDoneButton && <button id="done-button" onClick={handleDoneButtonClick}>Mark Tasks as Done</button>}
+                    {showInsights && sleepDuration !== null && (
+                        <SleepInsights duration={sleepDuration} />
+                    )}
                 </div>
             </div>
 

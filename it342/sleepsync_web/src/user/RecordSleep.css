@@ -227,3 +227,32 @@ input[type="time"] {
     padding: 20px;
     text-align: center;
 }
+
+.box {
+    width: 12rem; /* Ensure square dimensions */
+    height: 12rem; /* Ensure square dimensions */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(44, 24, 48, 0.9), rgba(107, 78, 113, 0.9));
+    color: white;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.box h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+}
+
+.box p {
+    font-size: 0.9rem;
+    line-height: 1.4;
+    text-align: center;
+}
