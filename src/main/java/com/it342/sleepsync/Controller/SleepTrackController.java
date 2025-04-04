@@ -69,16 +69,15 @@ public class SleepTrackController {
         try {
             String sleepTime = payload.get("sleep_time");
             String wakeTime = payload.get("wake_time");
-            String dateString = payload.get("date");
+            String sleepDate = payload.get("date");
+            String wakeDate = payload.get("wake_date");
 
-            if (sleepTime == null || wakeTime == null || dateString == null) {
-                return ResponseEntity.badRequest().body("Missing required fields: sleep_time, wake_time, or date.");
+            if (sleepTime == null || wakeTime == null || sleepDate == null || wakeDate == null) {
+                return ResponseEntity.badRequest().body("Missing required fields: sleep_time, wake_time, date, or wake_date.");
             }
 
-            LocalDate date = LocalDate.parse(dateString);
-
             // Calculate sleep duration
-            double sleepDuration = sleepTrackService.calculateSleepDuration(sleepTime, wakeTime);
+            double sleepDuration = sleepTrackService.calculateSleepDuration(sleepDate, sleepTime, wakeDate, wakeTime);
 
             // Generate tasks
             List<String> tasks = sleepTrackService.generateTasks();
@@ -89,7 +88,7 @@ public class SleepTrackController {
             // Store sleep record and tasks
             SleepTrack sleepTrack = new SleepTrack();
             sleepTrack.setUser(new User(id)); // Ensure the User object is properly set
-            sleepTrack.setDate(date);
+            sleepTrack.setDate(LocalDate.parse(sleepDate));
             sleepTrack.setSleepTime(sleepTime);
             sleepTrack.setWakeTime(wakeTime);
             sleepTrack.setSleepDuration(sleepDuration);

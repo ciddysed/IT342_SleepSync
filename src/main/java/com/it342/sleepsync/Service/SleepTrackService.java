@@ -1,5 +1,7 @@
 package com.it342.sleepsync.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Arrays;
 import java.util.List;
@@ -51,16 +53,28 @@ public class SleepTrackService {
         sleepTrackRepository.deleteById(id);
     }
 
-    public double calculateSleepDuration(String sleepTime, String wakeTime) {
+    public double calculateSleepDuration(String sleepDate, String sleepTime, String wakeDate, String wakeTime) {
         try {
             LocalTime sleep = LocalTime.parse(sleepTime);
             LocalTime wake = LocalTime.parse(wakeTime);
-            if (wake.isBefore(sleep)) {
-                wake = wake.plusHours(24);
+            LocalDate sleepDateParsed = LocalDate.parse(sleepDate);
+            LocalDate wakeDateParsed = LocalDate.parse(wakeDate);
+
+            // Combine date and time for accurate duration calculation
+            LocalDateTime sleepDateTime = LocalDateTime.of(sleepDateParsed, sleep);
+            LocalDateTime wakeDateTime = LocalDateTime.of(wakeDateParsed, wake);
+
+            // Adjust for AM/PM logic
+            if (wakeDateTime.isBefore(sleepDateTime)) {
+                wakeDateTime = wakeDateTime.plusDays(1); // Adjust wakeDateTime to the next day
             }
-            return (double) java.time.Duration.between(sleep, wake).toMinutes() / 60;
+
+            // Calculate duration in hours
+            double duration = java.time.Duration.between(sleepDateTime, wakeDateTime).toMinutes() / 60.0;
+
+            return Math.max(duration, 0); // Ensure no negative values
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid time format for sleepTime or wakeTime: " + e.getMessage());
+            throw new IllegalArgumentException("Invalid date or time format: " + e.getMessage());
         }
     }
 

@@ -195,3 +195,35 @@ input[type="time"] {
     color: white;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    background-color: #ddd;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 5px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.tab-button.active {
+    background-color: #6b4e71;
+    color: white;
+}
+
+.tab-button:hover {
+    background-color: #9b6b9e;
+    color: white;
+}
+
+.tab-content {
+    padding: 20px;
+    text-align: center;
+}

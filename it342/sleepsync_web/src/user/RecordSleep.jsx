@@ -1,35 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { Chart } from 'chart.js/auto';
-import axios from 'axios';
-import './RecordSleep.css'; // Import your CSS file
+import './RecordSleep.css';
 
 const RecordSleep = () => {
-    const [sleepDurations, setSleepDurations] = useState([]);
-    const [dates, setDates] = useState([]);
-    const [sleepTimes, setSleepTimes] = useState([]);
-    const [wakeTimes, setWakeTimes] = useState([]);
     const [sleepChart, setSleepChart] = useState(null);
     const [sleepLineChart, setSleepLineChart] = useState(null);
     const [sleepAreaChart, setSleepAreaChart] = useState(null);
     const [sleepDate, setSleepDate] = useState('');
     const [sleepTime, setSleepTime] = useState('');
     const [wakeTime, setWakeTime] = useState('');
+    const [wakeDate, setWakeDate] = useState('');
     const [taskCards, setTaskCards] = useState('');
     const [showDoneButton, setShowDoneButton] = useState(false);
     const [showFireworks, setShowFireworks] = useState(false);
-    const [allTasksChecked, setAllTasksChecked] = useState(false);
     const [sleepRecords, setSleepRecords] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
-
-    const prompts = [
-        "Great job! Keep tracking your sleep.",
-        "Sleep data saved! You're doing awesome.",
-        "Another night recorded! Keep it up.",
-        "Well done! Your sleep data is valuable.",
-        "Sleep time recorded! Stay consistent.",
-        "Good work! Tracking sleep helps improve it.",
-        "Sleep data saved! Keep monitoring your patterns."
-    ];
+    const [activeTab, setActiveTab] = useState('durationOverTime');
 
     useEffect(() => {
         if (taskCards) {
@@ -58,13 +44,35 @@ const RecordSleep = () => {
         }
     }, [isModalOpen]);
 
+    useEffect(() => {
+        if (sleepDate && sleepTime && wakeDate && wakeTime) {
+            const sleepDateTime = new Date(`${sleepDate}T${sleepTime}:00`);
+            let wakeDateTime = new Date(`${wakeDate}T${wakeTime}:00`);
+
+            if (wakeDateTime <= sleepDateTime) {
+                wakeDateTime.setDate(wakeDateTime.getDate() + 1);
+            }
+
+            const sleepDuration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
+
+            if (sleepDuration < 0) {
+                alert("Wake date and time must be after sleep date and time.");
+                setWakeDate('');
+                setWakeTime('');
+            }
+        }
+    }, [sleepDate, sleepTime, wakeDate, wakeTime]);
+
     const handleSleepFormSubmit = async (event) => {
         event.preventDefault();
+
         const sleepDateTime = new Date(`${sleepDate}T${sleepTime}:00`);
-        const wakeDateTime = new Date(`${sleepDate}T${wakeTime}:00`);
-        if (wakeDateTime < sleepDateTime) {
+        let wakeDateTime = new Date(`${wakeDate}T${wakeTime}:00`);
+
+        if (wakeDateTime <= sleepDateTime) {
             wakeDateTime.setDate(wakeDateTime.getDate() + 1);
         }
+
         const sleepDuration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
 
         const userId = localStorage.getItem("userId");
@@ -77,6 +85,8 @@ const RecordSleep = () => {
             sleep_time: sleepTime,
             wake_time: wakeTime,
             date: sleepDate,
+            wake_date: wakeDate,
+            sleep_duration: sleepDuration,
         };
 
         try {
@@ -94,6 +104,7 @@ const RecordSleep = () => {
                     setSleepDate('');
                     setSleepTime('');
                     setWakeTime('');
+                    setWakeDate('');
                 } else {
                     alert("Failed to record sleep time.");
                 }
@@ -146,13 +157,32 @@ const RecordSleep = () => {
         }
     };
 
+    const handleDeleteSleepRecord = async (trackingId) => {
+        try {
+            const response = await fetch(`http://localhost:8080/sleep-tracks/${trackingId}`, {
+                method: "DELETE",
+            });
+
+            if (response.ok) {
+                alert("Sleep record deleted successfully.");
+                setSleepRecords(sleepRecords.filter(record => record.trackingId !== trackingId));
+            } else {
+                console.error("Failed to delete sleep record. Status:", response.status);
+                alert("An error occurred while deleting the sleep record.");
+            }
+        } catch (error) {
+            console.error("Error deleting sleep record:", error);
+            alert("An error occurred while deleting the sleep record.");
+        }
+    };
+
     const closeModal = () => {
         setIsModalOpen(false);
     };
 
     const showModal = (records) => {
         const dates = records.map(record => record.date);
-        const sleepDurations = records.map(record => record.sleepDuration);
+        const sleepDurations = records.map(record => Math.max(record.sleepDuration, 0));
         const sleepTimes = records.map(record => record.sleepTime);
         const wakeTimes = records.map(record => record.wakeTime);
 
@@ -160,73 +190,87 @@ const RecordSleep = () => {
         if (sleepLineChart) sleepLineChart.destroy();
         if (sleepAreaChart) sleepAreaChart.destroy();
 
-        const ctxBar = document.getElementById('sleepChart').getContext('2d');
-        setSleepChart(new Chart(ctxBar, {
-            type: 'bar',
-            data: {
-                labels: dates,
-                datasets: [{
-                    label: 'Sleep Duration (hours)',
-                    data: sleepDurations,
-                    backgroundColor: 'rgba(107, 78, 113, 0.6)',
-                    borderColor: 'rgba(107, 78, 113, 1)',
-                    borderWidth: 1
-                }]
-            },
-            options: { scales: { y: { beginAtZero: true } } }
-        }));
+        const sleepChartCanvas = document.getElementById('sleepChart');
+        const sleepLineChartCanvas = document.getElementById('sleepLineChart');
+        const sleepAreaChartCanvas = document.getElementById('sleepAreaChart');
 
-        const ctxLine = document.getElementById('sleepLineChart').getContext('2d');
-        setSleepLineChart(new Chart(ctxLine, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [{
-                    label: 'Sleep Duration (hours)',
-                    data: sleepDurations,
-                    backgroundColor: 'rgba(107, 78, 113, 0.2)',
-                    borderColor: 'rgba(107, 78, 113, 1)',
-                    borderWidth: 1,
-                    fill: true
-                }]
-            },
-            options: { scales: { y: { beginAtZero: true } } }
-        }));
+        if (sleepChartCanvas) {
+            const ctxBar = sleepChartCanvas.getContext('2d');
+            setSleepChart(new Chart(ctxBar, {
+                type: 'bar',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Sleep Duration (hours)',
+                        data: sleepDurations,
+                        backgroundColor: 'rgba(107, 78, 113, 0.6)',
+                        borderColor: 'rgba(107, 78, 113, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true } } }
+            }));
+        }
 
-        const ctxArea = document.getElementById('sleepAreaChart').getContext('2d');
-        setSleepAreaChart(new Chart(ctxArea, {
-            type: 'line',
-            data: {
-                labels: dates,
-                datasets: [{
-                    label: 'Sleep Duration (hours)',
-                    data: sleepDurations,
-                    backgroundColor: 'rgba(107, 78, 113, 0.4)',
-                    borderColor: 'rgba(107, 78, 113, 1)',
-                    borderWidth: 1,
-                    fill: true
-                }]
-            },
-            options: { scales: { y: { beginAtZero: true } } }
-        }));
+        if (sleepLineChartCanvas) {
+            const ctxLine = sleepLineChartCanvas.getContext('2d');
+            setSleepLineChart(new Chart(ctxLine, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Sleep Duration (hours)',
+                        data: sleepDurations,
+                        backgroundColor: 'rgba(107, 78, 113, 0.2)',
+                        borderColor: 'rgba(107, 78, 113, 1)',
+                        borderWidth: 1,
+                        fill: true
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true } } }
+            }));
+        }
 
-        const avgSleepDuration = (sleepDurations.reduce((a, b) => a + b, 0) / sleepDurations.length).toFixed(2);
-        const avgSleepTime = calculateAverageTime(sleepTimes);
-        const avgWakeTime = calculateAverageTime(wakeTimes);
+        if (sleepAreaChartCanvas) {
+            const ctxArea = sleepAreaChartCanvas.getContext('2d');
+            setSleepAreaChart(new Chart(ctxArea, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Sleep Duration (hours)',
+                        data: sleepDurations,
+                        backgroundColor: 'rgba(107, 78, 113, 0.4)',
+                        borderColor: 'rgba(107, 78, 113, 1)',
+                        borderWidth: 1,
+                        fill: true
+                    }]
+                },
+                options: { scales: { y: { beginAtZero: true } } }
+            }));
+        }
 
-        document.getElementById('avgSleepDuration').innerText = avgSleepDuration;
-        document.getElementById('avgSleepTime').innerText = avgSleepTime;
-        document.getElementById('avgWakeTime').innerText = avgWakeTime;
+        updateReports(sleepDurations, sleepTimes, wakeTimes);
     };
 
-    const updateReports = () => {
-        const avgSleepDuration = (sleepDurations.reduce((a, b) => a + b, 0) / sleepDurations.length).toFixed(2);
-        const avgSleepTime = calculateAverageTime(sleepTimes);
-        const avgWakeTime = calculateAverageTime(wakeTimes);
+    const updateReports = (sleepDurations, sleepTimes, wakeTimes) => {
+        if (sleepDurations && sleepDurations.length > 0 && sleepTimes && sleepTimes.length > 0 && wakeTimes && wakeTimes.length > 0) {
+            const avgSleepDuration = (sleepDurations.reduce((a, b) => a + b, 0) / sleepDurations.length).toFixed(2);
+            const avgSleepTime = calculateAverageTime(sleepTimes);
+            const avgWakeTime = calculateAverageTime(wakeTimes);
 
-        document.getElementById('avgSleepDuration').innerText = avgSleepDuration;
-        document.getElementById('avgSleepTime').innerText = avgSleepTime;
-        document.getElementById('avgWakeTime').innerText = avgWakeTime;
+            if (document.getElementById('avgSleepDuration')) {
+                document.getElementById('avgSleepDuration').innerText = avgSleepDuration;
+            }
+            if (document.getElementById('avgSleepTime')) {
+                document.getElementById('avgSleepTime').innerText = avgSleepTime;
+            }
+            if (document.getElementById('avgWakeTime')) {
+                document.getElementById('avgWakeTime').innerText = avgWakeTime;
+            }
+        } else {
+            console.error("Sleep data arrays are empty or undefined.");
+        }
     };
 
     const calculateAverageTime = (times) => {
@@ -235,7 +279,7 @@ const RecordSleep = () => {
             return total + hours * 60 + minutes;
         }, 0);
         const avgMinutes = totalMinutes / times.length;
-        const avgHours = Math.floor(avgMinutes / 60);
+        const avgHours = Math.floor(avgMinutes / 60) % 12;
         const avgMins = Math.round(avgMinutes % 60);
         return `${String(avgHours).padStart(2, '0')}:${String(avgMins).padStart(2, '0')}`;
     };
@@ -244,10 +288,84 @@ const RecordSleep = () => {
         const checkboxes = document.querySelectorAll('.task-card input[type="checkbox"]');
         checkboxes.forEach(checkbox => {
             checkbox.addEventListener('change', () => {
-                const checked = Array.from(checkboxes).every(cb => cb.checked);
-                setAllTasksChecked(checked);
+                Array.from(checkboxes).every(cb => cb.checked); // Removed: const checked
             });
         });
+    };
+
+    const renderTabContent = () => {
+        switch (activeTab) {
+            case 'durationOverTime':
+                return (
+                    <div className="chart-card">
+                        <h3>Sleep Duration Over Time</h3>
+                        <canvas id="sleepChart"></canvas>
+                    </div>
+                );
+            case 'durationTrend':
+                return (
+                    <div className="chart-card">
+                        <h3>Sleep Duration Trend</h3>
+                        <canvas id="sleepLineChart"></canvas>
+                    </div>
+                );
+            case 'patternOverview':
+                return (
+                    <div className="chart-card">
+                        <h3>Sleep Pattern Overview</h3>
+                        <canvas id="sleepAreaChart"></canvas>
+                    </div>
+                );
+            case 'analysisReport':
+                return (
+                    <div className="report-section">
+                        <h3>Sleep Analysis Report</h3>
+                        <div className="report-grid">
+                            <div className="report-item">
+                                <span className="report-label">Average Sleep Duration</span>
+                                <span className="report-value"><span id="avgSleepDuration"></span> hours</span>
+                            </div>
+                            <div className="report-item">
+                                <span className="report-label">Average Sleep Time</span>
+                                <span className="report-value"><span id="avgSleepTime"></span></span>
+                            </div>
+                            <div className="report-item">
+                                <span className="report-label">Average Wake Time</span>
+                                <span className="report-value"><span id="avgWakeTime"></span></span>
+                            </div>
+                        </div>
+                    </div>
+                );
+            case 'sleepRecords':
+                return (
+                    <div className="report-section">
+                        <h3>Sleep Records</h3>
+                        <ul>
+                            {sleepRecords.map(record => (
+                                <li key={record.trackingId}>
+                                    <span>{record.date} - {record.sleepTime} to {record.wakeTime} ({record.sleepDuration} hours)</span>
+                                    <button
+                                        onClick={() => handleDeleteSleepRecord(record.trackingId)}
+                                        style={{
+                                            marginLeft: "10px",
+                                            backgroundColor: "#e74c3c",
+                                            color: "white",
+                                            border: "none",
+                                            padding: "5px 10px",
+                                            borderRadius: "5px",
+                                            cursor: "pointer"
+                                        }}
+                                    >
+                                        Delete
+                                    </button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                );
+            default:
+                return null;
+        }
     };
 
     return (
@@ -256,7 +374,7 @@ const RecordSleep = () => {
                 <div className="nav-content">
                     <a href="/landing_page" className="nav-logo">
                         <svg viewBox="0 0 24 24">
-                            <path d="M19 7h-8v8H3V7H1v10h2v3c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-3h2V7h-2zM7 19h10v-6H7v6z" />
+                            <path d="M19 7h-8v8H3V7H1v10h2v3c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-3h2V7h-2z" />
                         </svg>
                         <span>SleepSync</span>
                     </a>
@@ -274,16 +392,48 @@ const RecordSleep = () => {
                     </div>
                     <form id="sleep-form" onSubmit={handleSleepFormSubmit}>
                         <div className="form-group">
-                            <label htmlFor="date">Date</label>
-                            <input type="date" id="date" name="date" value={sleepDate} onChange={(e) => setSleepDate(e.target.value)} required />
+                            <label htmlFor="date">Sleep Date</label>
+                            <input
+                                type="date"
+                                id="date"
+                                name="date"
+                                value={sleepDate}
+                                onChange={(e) => setSleepDate(e.target.value)}
+                                required
+                            />
                         </div>
                         <div className="form-group">
                             <label htmlFor="sleep_time">Sleep Time</label>
-                            <input type="time" id="sleep_time" name="sleep_time" value={sleepTime} onChange={(e) => setSleepTime(e.target.value)} required />
+                            <input
+                                type="time"
+                                id="sleep_time"
+                                name="sleep_time"
+                                value={sleepTime}
+                                onChange={(e) => setSleepTime(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="wake_date">Wake Date</label>
+                            <input
+                                type="date"
+                                id="wake_date"
+                                name="wake_date"
+                                value={wakeDate}
+                                onChange={(e) => setWakeDate(e.target.value)}
+                                required
+                            />
                         </div>
                         <div className="form-group">
                             <label htmlFor="wake_time">Wake Time</label>
-                            <input type="time" id="wake_time" name="wake_time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} required />
+                            <input
+                                type="time"
+                                id="wake_time"
+                                name="wake_time"
+                                value={wakeTime}
+                                onChange={(e) => setWakeTime(e.target.value)}
+                                required
+                            />
                         </div>
                         <button type="submit" id="save-button">Save</button>
                     </form>
@@ -296,42 +446,44 @@ const RecordSleep = () => {
                 <div className="modal-content">
                     <div className="modal-header">
                         <h2>Sleep Analysis Dashboard</h2>
-                        <span className="close">&times;</span>
+                        <span className="close" onClick={closeModal}>&times;</span>
                     </div>
 
-                    <div className="charts-grid">
-                        <div className="chart-card">
-                            <h3>Sleep Duration Over Time</h3>
-                            <canvas id="sleepChart"></canvas>
-                        </div>
-
-                        <div className="chart-card">
-                            <h3>Sleep Duration Trend</h3>
-                            <canvas id="sleepLineChart"></canvas>
-                        </div>
-
-                        <div className="chart-card">
-                            <h3>Sleep Pattern Overview</h3>
-                            <canvas id="sleepAreaChart"></canvas>
-                        </div>
+                    <div className="tabs">
+                        <button
+                            className={`tab-button ${activeTab === 'durationOverTime' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('durationOverTime')}
+                        >
+                            Sleep Duration Over Time
+                        </button>
+                        <button
+                            className={`tab-button ${activeTab === 'durationTrend' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('durationTrend')}
+                        >
+                            Duration Trend
+                        </button>
+                        <button
+                            className={`tab-button ${activeTab === 'patternOverview' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('patternOverview')}
+                        >
+                            Pattern Overview
+                        </button>
+                        <button
+                            className={`tab-button ${activeTab === 'analysisReport' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('analysisReport')}
+                        >
+                            Sleep Analysis Report
+                        </button>
+                        <button
+                            className={`tab-button ${activeTab === 'sleepRecords' ? 'active' : ''}`}
+                            onClick={() => setActiveTab('sleepRecords')}
+                        >
+                            Sleep Records
+                        </button>
                     </div>
 
-                    <div className="report-section">
-                        <h3>Sleep Analysis Report</h3>
-                        <div className="report-grid">
-                            <div className="report-item">
-                                <span className="report-label">Average Sleep Duration</span>
-                                <span className="report-value"><span id="avgSleepDuration"></span> hours</span>
-                            </div>
-                            <div className="report-item">
-                                <span className="report-label">Average Sleep Time</span>
-                                <span className="report-value"><span id="avgSleepTime"></span></span>
-                            </div>
-                            <div className="report-item">
-                                <span className="report-label">Average Wake Time</span>
-                                <span className="report-value"><span id="avgWakeTime"></span></span>
-                            </div>
-                        </div>
+                    <div className="tab-content">
+                        {renderTabContent()}
                     </div>
                 </div>
             </div>
