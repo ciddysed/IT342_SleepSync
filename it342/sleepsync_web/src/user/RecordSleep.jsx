@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Chart } from 'chart.js/auto';
 import './RecordSleep.css';
+import SleepInsights from './components/SleepInsights';
+import { getSleepCategory } from './utils/sleepCategories';
 
 const RecordSleep = () => {
     const [sleepChart, setSleepChart] = useState(null);
@@ -16,6 +18,8 @@ const RecordSleep = () => {
     const [sleepRecords, setSleepRecords] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('durationOverTime');
+    const [sleepDuration, setSleepDuration] = useState(null); // Track sleep duration
+    const [showInsights, setShowInsights] = useState(false); // Control insights visibility
 
     useEffect(() => {
         if (taskCards) {
@@ -53,9 +57,10 @@ const RecordSleep = () => {
                 wakeDateTime.setDate(wakeDateTime.getDate() + 1);
             }
 
-            const sleepDuration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
-
-            if (sleepDuration < 0) {
+            const duration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
+            if (duration >= 0) {
+                setSleepDuration(duration); // Update sleep duration
+            } else {
                 alert("Wake date and time must be after sleep date and time.");
                 setWakeDate('');
                 setWakeTime('');
@@ -73,7 +78,7 @@ const RecordSleep = () => {
             wakeDateTime.setDate(wakeDateTime.getDate() + 1);
         }
 
-        const sleepDuration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
+        const duration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
 
         const userId = localStorage.getItem("userId");
         if (!userId) {
@@ -86,7 +91,7 @@ const RecordSleep = () => {
             wake_time: wakeTime,
             date: sleepDate,
             wake_date: wakeDate,
-            sleep_duration: sleepDuration,
+            sleep_duration: duration,
         };
 
         try {
@@ -105,6 +110,8 @@ const RecordSleep = () => {
                     setSleepTime('');
                     setWakeTime('');
                     setWakeDate('');
+                    setSleepDuration(duration); // Update sleep duration
+                    setShowInsights(true); // Show insights after saving
                 } else {
                     alert("Failed to record sleep time.");
                 }
@@ -127,6 +134,7 @@ const RecordSleep = () => {
                 setShowFireworks(false);
                 setTaskCards('');
                 setShowDoneButton(false);
+                setShowInsights(false); // Hide sleep insights
             }, 3000);
         } else {
             alert("Please complete all tasks before proceeding.");
@@ -437,8 +445,19 @@ const RecordSleep = () => {
                         </div>
                         <button type="submit" id="save-button">Save</button>
                     </form>
-                    <div id="task-cards-container" dangerouslySetInnerHTML={{ __html: taskCards }} />
-                    {showDoneButton && <button id="done-button" onClick={handleDoneButtonClick}>Mark Tasks as Done</button>}
+                    {showInsights && sleepDuration !== null && (
+                        <>
+                            <SleepInsights duration={sleepDuration} getSleepCategory={getSleepCategory} />
+                            <div className="mt-6">
+                                <div id="task-cards-container" dangerouslySetInnerHTML={{ __html: taskCards }} />
+                                {showDoneButton && (
+                                    <button id="done-button" onClick={handleDoneButtonClick}>
+                                        Mark Tasks as Done
+                                    </button>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 
