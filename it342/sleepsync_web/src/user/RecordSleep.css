@@ -256,3 +256,15 @@ input[type="time"] {
     line-height: 1.4;
     text-align: center;
 }
+
+.task-item {
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
