@@ -1,91 +1,90 @@
-import React, { useState, useEffect } from 'react';
-import { Chart } from 'chart.js/auto';
+import React, { useState, useEffect, useRef } from 'react';
+import Chart from 'chart.js/auto';
 import './RecordSleep.css';
 import SleepInsights from './components/SleepInsights';
+import SleepForm from './components/SleepForm';
+import SleepModal from './components/SleepModal';
+import TaskCards from './components/TaskCards';
+import { initializeTaskCardListeners } from './utils/taskCardListeners';
 import { getSleepCategory } from './utils/sleepCategories';
 
 const RecordSleep = () => {
-    const [sleepChart, setSleepChart] = useState(null);
-    const [sleepLineChart, setSleepLineChart] = useState(null);
-    const [sleepAreaChart, setSleepAreaChart] = useState(null);
-    const [sleepDate, setSleepDate] = useState('');
-    const [sleepTime, setSleepTime] = useState('');
-    const [wakeTime, setWakeTime] = useState('');
-    const [wakeDate, setWakeDate] = useState('');
+    const [sleepDate, setSleepDate] = useState(() => {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    });
+    const [sleepTime, setSleepTime] = useState('22:00');
+    const [wakeTime, setWakeTime] = useState('07:00');
+    const [wakeDate, setWakeDate] = useState(() => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.toISOString().split('T')[0];
+    });
     const [taskCards, setTaskCards] = useState('');
     const [showDoneButton, setShowDoneButton] = useState(false);
     const [showFireworks, setShowFireworks] = useState(false);
     const [sleepRecords, setSleepRecords] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [activeTab, setActiveTab] = useState('durationOverTime');
-    const [sleepDuration, setSleepDuration] = useState(null); // Track sleep duration
-    const [showInsights, setShowInsights] = useState(false); // Control insights visibility
-
+    const [sleepDuration, setSleepDuration] = useState(null);
+    const [showInsights, setShowInsights] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
+    
+    // Chart references
+    const sleepChartRef = useRef(null);
+    const sleepLineChartRef = useRef(null);
+    const sleepAreaChartRef = useRef(null);
+    
     useEffect(() => {
         if (taskCards) {
             initializeTaskCardListeners();
         }
     }, [taskCards]);
-
+    
+    // Clean up charts when component unmounts
     useEffect(() => {
-        if (isModalOpen) {
-            const closeButton = document.querySelector('.close');
-            const modal = document.getElementById('sleepModal');
-
-            const handleClickOutside = (event) => {
-                if (event.target === modal) {
-                    closeModal();
-                }
-            };
-
-            closeButton.addEventListener('click', closeModal);
-            window.addEventListener('click', handleClickOutside);
-
-            return () => {
-                closeButton.removeEventListener('click', closeModal);
-                window.removeEventListener('click', handleClickOutside);
-            };
-        }
-    }, [isModalOpen]);
-
+        return () => {
+            if (sleepChartRef.current) {
+                sleepChartRef.current.destroy();
+            }
+            if (sleepLineChartRef.current) {
+                sleepLineChartRef.current.destroy();
+            }
+            if (sleepAreaChartRef.current) {
+                sleepAreaChartRef.current.destroy();
+            }
+        };
+    }, []);
+    
+    // Update charts when sleep records or active tab changes
     useEffect(() => {
-        if (sleepDate && sleepTime && wakeDate && wakeTime) {
-            const sleepDateTime = new Date(`${sleepDate}T${sleepTime}:00`);
-            let wakeDateTime = new Date(`${wakeDate}T${wakeTime}:00`);
-
-            if (wakeDateTime <= sleepDateTime) {
-                wakeDateTime.setDate(wakeDateTime.getDate() + 1);
-            }
-
-            const duration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
-            if (duration >= 0) {
-                setSleepDuration(duration); // Update sleep duration
-            } else {
-                alert("Wake date and time must be after sleep date and time.");
-                setWakeDate('');
-                setWakeTime('');
-            }
+        if (isModalOpen && sleepRecords.length > 0) {
+            renderCharts();
         }
-    }, [sleepDate, sleepTime, wakeDate, wakeTime]);
+    }, [sleepRecords, activeTab, isModalOpen]);
 
     const handleSleepFormSubmit = async (event) => {
         event.preventDefault();
-
+        setIsLoading(true);
+        setErrorMessage('');
+    
         const sleepDateTime = new Date(`${sleepDate}T${sleepTime}:00`);
         let wakeDateTime = new Date(`${wakeDate}T${wakeTime}:00`);
-
+    
         if (wakeDateTime <= sleepDateTime) {
             wakeDateTime.setDate(wakeDateTime.getDate() + 1);
         }
-
+    
         const duration = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
-
+    
         const userId = localStorage.getItem("userId");
         if (!userId) {
-            alert("User not logged in. Please log in to record sleep.");
+            setErrorMessage("User not logged in. Please log in to record sleep.");
+            setIsLoading(false);
             return;
         }
-
+    
         const sleepTrackData = {
             sleep_time: sleepTime,
             wake_time: wakeTime,
@@ -93,35 +92,78 @@ const RecordSleep = () => {
             wake_date: wakeDate,
             sleep_duration: duration,
         };
-
+    
         try {
             const response = await fetch(`http://localhost:8080/sleep-tracks/record_sleep_time/${userId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(sleepTrackData),
             });
-
+    
             if (response.ok) {
                 const data = await response.json();
                 if (data.status === "success") {
-                    setTaskCards(data.task_cards);
+                    // Validate and parse taskCards
+                    if (Array.isArray(data.task_cards)) {
+                        setTaskCards(data.task_cards);
+                    } else if (typeof data.task_cards === 'string') {
+                        // Parse raw HTML into structured data
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(data.task_cards, 'text/html');
+                        const tasks = Array.from(doc.querySelectorAll('.task-card')).map((card) => {
+                            const description = card.querySelector('span')?.textContent || 'Unknown Task';
+                            const completed = card.querySelector('input[type="checkbox"]')?.checked || false;
+                            return { description, completed };
+                        });
+                        setTaskCards(tasks);
+                    } else {
+                        console.error("Invalid taskCards data received:", data.task_cards);
+                        setTaskCards([]);
+                    }
                     setShowDoneButton(true);
-                    setSleepDate('');
-                    setSleepTime('');
-                    setWakeTime('');
-                    setWakeDate('');
-                    setSleepDuration(duration); // Update sleep duration
-                    setShowInsights(true); // Show insights after saving
+                    setSleepDuration(duration);
+                    setShowInsights(true);
                 } else {
-                    alert("Failed to record sleep time.");
+                    setErrorMessage("Failed to record sleep time.");
                 }
             } else {
                 console.error("Failed to record sleep time. Status:", response.status);
-                alert("An error occurred while recording sleep time. Please try again.");
+                setErrorMessage("An error occurred while recording sleep time. Please try again.");
             }
         } catch (error) {
             console.error("Error recording sleep time:", error);
-            alert("An error occurred while recording sleep time. Please try again.");
+            setErrorMessage("An error occurred while recording sleep time. Please try again.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleTrackProgressButtonClick = async () => {
+        setIsLoading(true);
+        setErrorMessage('');
+        
+        try {
+            const userId = localStorage.getItem("userId");
+            if (!userId) {
+                setErrorMessage("User not logged in. Please log in to view sleep progress.");
+                setIsLoading(false);
+                return;
+            }
+
+            const response = await fetch(`http://localhost:8080/sleep-tracks/${userId}`);
+            if (response.ok) {
+                const data = await response.json();
+                setSleepRecords(data);
+                setIsModalOpen(true);
+            } else {
+                console.error("Failed to fetch sleep records. Status:", response.status);
+                setErrorMessage("An error occurred while fetching sleep records.");
+            }
+        } catch (error) {
+            console.error("Error fetching sleep records:", error);
+            setErrorMessage("An error occurred while fetching sleep records.");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -130,250 +172,396 @@ const RecordSleep = () => {
         const allChecked = Array.from(checkboxes).every(cb => cb.checked);
         if (allChecked) {
             setShowFireworks(true);
+            
+            // Create actual fireworks
+            const fireworksContainer = document.createElement('div');
+            fireworksContainer.className = 'fireworks-container';
+            
+            // Add congratulations message
+            const congratsMessage = document.createElement('div');
+            congratsMessage.className = 'congratulations-message';
+            congratsMessage.textContent = 'Great job improving your sleep habits!';
+            fireworksContainer.appendChild(congratsMessage);
+            
+            // Create fireworks
+            for (let i = 0; i < 20; i++) {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                firework.style.left = `${Math.random() * 100}%`;
+                firework.style.top = `${Math.random() * 100}%`;
+                firework.style.animationDelay = `${Math.random() * 2}s`;
+                fireworksContainer.appendChild(firework);
+            }
+            
+            document.body.appendChild(fireworksContainer);
+            
             setTimeout(() => {
+                document.body.removeChild(fireworksContainer);
                 setShowFireworks(false);
                 setTaskCards('');
                 setShowDoneButton(false);
-                setShowInsights(false); // Hide sleep insights
+                setShowInsights(false);
             }, 3000);
         } else {
-            alert("Please complete all tasks before proceeding.");
+            setErrorMessage("Please complete all tasks before proceeding.");
         }
     };
-
-    const handleTrackProgressButtonClick = async () => {
-        try {
-            const userId = localStorage.getItem("userId");
-            if (!userId) {
-                alert("User not logged in. Please log in to view sleep progress.");
-                return;
-            }
-
-            const response = await fetch(`http://localhost:8080/sleep-tracks/${userId}`);
-            if (response.ok) {
-                const data = await response.json();
-                setSleepRecords(data);
-                showModal(data);
-                setIsModalOpen(true);
-            } else {
-                console.error("Failed to fetch sleep records. Status:", response.status);
-                alert("An error occurred while fetching sleep records.");
-            }
-        } catch (error) {
-            console.error("Error fetching sleep records:", error);
-            alert("An error occurred while fetching sleep records.");
+    
+    const renderCharts = () => {
+        const dates = sleepRecords.map(record => record.date);
+        const durations = sleepRecords.map(record => Number(record.sleepDuration).toFixed(1));
+        const sleepTimes = sleepRecords.map(record => record.sleepTime);
+        const wakeTimes = sleepRecords.map(record => record.wakeTime);
+        
+        // Destroy existing charts if they exist
+        if (sleepChartRef.current) {
+            sleepChartRef.current.destroy();
         }
-    };
-
-    const handleDeleteSleepRecord = async (trackingId) => {
-        try {
-            const response = await fetch(`http://localhost:8080/sleep-tracks/${trackingId}`, {
-                method: "DELETE",
-            });
-
-            if (response.ok) {
-                alert("Sleep record deleted successfully.");
-                setSleepRecords(sleepRecords.filter(record => record.trackingId !== trackingId));
-            } else {
-                console.error("Failed to delete sleep record. Status:", response.status);
-                alert("An error occurred while deleting the sleep record.");
-            }
-        } catch (error) {
-            console.error("Error deleting sleep record:", error);
-            alert("An error occurred while deleting the sleep record.");
+        if (sleepLineChartRef.current) {
+            sleepLineChartRef.current.destroy();
         }
-    };
-
-    const closeModal = () => {
-        setIsModalOpen(false);
-    };
-
-    const showModal = (records) => {
-        const dates = records.map(record => record.date);
-        const sleepDurations = records.map(record => Math.max(record.sleepDuration, 0));
-        const sleepTimes = records.map(record => record.sleepTime);
-        const wakeTimes = records.map(record => record.wakeTime);
-
-        if (sleepChart) sleepChart.destroy();
-        if (sleepLineChart) sleepLineChart.destroy();
-        if (sleepAreaChart) sleepAreaChart.destroy();
-
-        const sleepChartCanvas = document.getElementById('sleepChart');
-        const sleepLineChartCanvas = document.getElementById('sleepLineChart');
-        const sleepAreaChartCanvas = document.getElementById('sleepAreaChart');
-
-        if (sleepChartCanvas) {
-            const ctxBar = sleepChartCanvas.getContext('2d');
-            setSleepChart(new Chart(ctxBar, {
+        if (sleepAreaChartRef.current) {
+            sleepAreaChartRef.current.destroy();
+        }
+        
+        // Create bar chart
+        const sleepChartEl = document.getElementById('sleepChart');
+        if (sleepChartEl) {
+            const ctx = sleepChartEl.getContext('2d');
+            sleepChartRef.current = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: dates,
                     datasets: [{
                         label: 'Sleep Duration (hours)',
-                        data: sleepDurations,
+                        data: durations,
                         backgroundColor: 'rgba(107, 78, 113, 0.6)',
                         borderColor: 'rgba(107, 78, 113, 1)',
                         borderWidth: 1
                     }]
                 },
-                options: { scales: { y: { beginAtZero: true } } }
-            }));
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Sleep Duration by Date'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Duration: ${context.raw} hours`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
-
-        if (sleepLineChartCanvas) {
-            const ctxLine = sleepLineChartCanvas.getContext('2d');
-            setSleepLineChart(new Chart(ctxLine, {
+        
+        // Create line chart
+        const sleepLineChartEl = document.getElementById('sleepLineChart');
+        if (sleepLineChartEl) {
+            const ctx = sleepLineChartEl.getContext('2d');
+            sleepLineChartRef.current = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: dates,
                     datasets: [{
-                        label: 'Sleep Duration (hours)',
-                        data: sleepDurations,
+                        label: 'Sleep Duration Trend',
+                        data: durations,
                         backgroundColor: 'rgba(107, 78, 113, 0.2)',
                         borderColor: 'rgba(107, 78, 113, 1)',
-                        borderWidth: 1,
-                        fill: true
+                        borderWidth: 2,
+                        tension: 0.3,
+                        pointBackgroundColor: 'rgba(107, 78, 113, 1)',
+                        pointRadius: 4
                     }]
                 },
-                options: { scales: { y: { beginAtZero: true } } }
-            }));
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Sleep Duration Trend Over Time'
+                        }
+                    }
+                }
+            });
         }
-
-        if (sleepAreaChartCanvas) {
-            const ctxArea = sleepAreaChartCanvas.getContext('2d');
-            setSleepAreaChart(new Chart(ctxArea, {
+        
+        // Create area chart
+        const sleepAreaChartEl = document.getElementById('sleepAreaChart');
+        if (sleepAreaChartEl) {
+            const ctx = sleepAreaChartEl.getContext('2d');
+            
+            // Create color-coded datasets based on sleep quality
+            const optimalData = durations.map((duration, index) => {
+                const durationNum = parseFloat(duration);
+                return durationNum >= 7 && durationNum <= 9 ? durationNum : null;
+            });
+            
+            const lowData = durations.map((duration, index) => {
+                const durationNum = parseFloat(duration);
+                return durationNum < 7 ? durationNum : null;
+            });
+            
+            const highData = durations.map((duration, index) => {
+                const durationNum = parseFloat(duration);
+                return durationNum > 9 ? durationNum : null;
+            });
+            
+            sleepAreaChartRef.current = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: dates,
-                    datasets: [{
-                        label: 'Sleep Duration (hours)',
-                        data: sleepDurations,
-                        backgroundColor: 'rgba(107, 78, 113, 0.4)',
-                        borderColor: 'rgba(107, 78, 113, 1)',
-                        borderWidth: 1,
-                        fill: true
-                    }]
+                    datasets: [
+                        {
+                            label: 'Optimal Sleep (7-9h)',
+                            data: optimalData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.4)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgba(75, 192, 192, 1)',
+                            pointRadius: 4,
+                            fill: true
+                        },
+                        {
+                            label: 'Sleep Deficit (<7h)',
+                            data: lowData,
+                            backgroundColor: 'rgba(255, 99, 132, 0.4)',
+                            borderColor: 'rgba(255, 99, 132, 1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgba(255, 99, 132, 1)',
+                            pointRadius: 4,
+                            fill: true
+                        },
+                        {
+                            label: 'Oversleep (>9h)',
+                            data: highData,
+                            backgroundColor: 'rgba(54, 162, 235, 0.4)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                            pointRadius: 4,
+                            fill: true
+                        }
+                    ]
                 },
-                options: { scales: { y: { beginAtZero: true } } }
-            }));
-        }
-
-        updateReports(sleepDurations, sleepTimes, wakeTimes);
-    };
-
-    const updateReports = (sleepDurations, sleepTimes, wakeTimes) => {
-        if (sleepDurations && sleepDurations.length > 0 && sleepTimes && sleepTimes.length > 0 && wakeTimes && wakeTimes.length > 0) {
-            const avgSleepDuration = (sleepDurations.reduce((a, b) => a + b, 0) / sleepDurations.length).toFixed(2);
-            const avgSleepTime = calculateAverageTime(sleepTimes);
-            const avgWakeTime = calculateAverageTime(wakeTimes);
-
-            if (document.getElementById('avgSleepDuration')) {
-                document.getElementById('avgSleepDuration').innerText = avgSleepDuration;
-            }
-            if (document.getElementById('avgSleepTime')) {
-                document.getElementById('avgSleepTime').innerText = avgSleepTime;
-            }
-            if (document.getElementById('avgWakeTime')) {
-                document.getElementById('avgWakeTime').innerText = avgWakeTime;
-            }
-        } else {
-            console.error("Sleep data arrays are empty or undefined.");
-        }
-    };
-
-    const calculateAverageTime = (times) => {
-        const totalMinutes = times.reduce((total, time) => {
-            const [hours, minutes] = time.split(':').map(Number);
-            return total + hours * 60 + minutes;
-        }, 0);
-        const avgMinutes = totalMinutes / times.length;
-        const avgHours = Math.floor(avgMinutes / 60) % 12;
-        const avgMins = Math.round(avgMinutes % 60);
-        return `${String(avgHours).padStart(2, '0')}:${String(avgMins).padStart(2, '0')}`;
-    };
-
-    const initializeTaskCardListeners = () => {
-        const checkboxes = document.querySelectorAll('.task-card input[type="checkbox"]');
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener('change', () => {
-                Array.from(checkboxes).every(cb => cb.checked); // Removed: const checked
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours'
+                            },
+                            suggestedMin: 4,
+                            suggestedMax: 12
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Sleep Quality Overview'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    if (context.raw === null) return '';
+                                    const durationNum = parseFloat(context.raw);
+                                    let quality = '';
+                                    if (durationNum >= 7 && durationNum <= 9) {
+                                        quality = 'Optimal';
+                                    } else if (durationNum < 7) {
+                                        quality = 'Deficit';
+                                    } else {
+                                        quality = 'Oversleep';
+                                    }
+                                    return `${quality}: ${context.raw} hours`;
+                                }
+                            }
+                        }
+                    }
+                }
             });
-        });
+        }
     };
 
     const renderTabContent = () => {
         switch (activeTab) {
             case 'durationOverTime':
                 return (
-                    <div className="chart-card">
+                    <div className="chart-container">
                         <h3>Sleep Duration Over Time</h3>
-                        <canvas id="sleepChart"></canvas>
+                        <div style={{ height: '350px', width: '100%' }}>
+                            <canvas id="sleepChart"></canvas>
+                        </div>
                     </div>
                 );
             case 'durationTrend':
                 return (
-                    <div className="chart-card">
+                    <div className="chart-container">
                         <h3>Sleep Duration Trend</h3>
-                        <canvas id="sleepLineChart"></canvas>
+                        <div style={{ height: '350px', width: '100%' }}>
+                            <canvas id="sleepLineChart"></canvas>
+                        </div>
                     </div>
                 );
             case 'patternOverview':
                 return (
-                    <div className="chart-card">
+                    <div className="chart-container">
                         <h3>Sleep Pattern Overview</h3>
-                        <canvas id="sleepAreaChart"></canvas>
+                        <div style={{ height: '350px', width: '100%' }}>
+                            <canvas id="sleepAreaChart"></canvas>
+                        </div>
                     </div>
                 );
             case 'analysisReport':
                 return (
-                    <div className="report-section">
+                    <div className="analysis-report">
                         <h3>Sleep Analysis Report</h3>
                         <div className="report-grid">
                             <div className="report-item">
                                 <span className="report-label">Average Sleep Duration</span>
-                                <span className="report-value"><span id="avgSleepDuration"></span> hours</span>
+                                <span className="report-value">
+                                    {sleepRecords.length > 0 
+                                        ? (sleepRecords.reduce((sum, record) => sum + parseFloat(record.sleepDuration), 0) / sleepRecords.length).toFixed(1) 
+                                        : 0} hours
+                                </span>
+                            </div>
+                            <div className="report-item">
+                                <span className="report-label">Optimal Days</span>
+                                <span className="report-value">
+                                    {sleepRecords.filter(record => parseFloat(record.sleepDuration) >= 7 && parseFloat(record.sleepDuration) <= 9).length}
+                                </span>
+                            </div>
+                            <div className="report-item">
+                                <span className="report-label">Sleep Deficit Days</span>
+                                <span className="report-value">
+                                    {sleepRecords.filter(record => parseFloat(record.sleepDuration) < 7).length}
+                                </span>
+                            </div>
+                            <div className="report-item">
+                                <span className="report-label">Oversleep Days</span>
+                                <span className="report-value">
+                                    {sleepRecords.filter(record => parseFloat(record.sleepDuration) > 9).length}
+                                </span>
                             </div>
                             <div className="report-item">
                                 <span className="report-label">Average Sleep Time</span>
-                                <span className="report-value"><span id="avgSleepTime"></span></span>
+                                <span className="report-value">
+                                    {sleepRecords.length > 0 
+                                        ? calculateAverageTime(sleepRecords.map(record => record.sleepTime))
+                                        : "N/A"}
+                                </span>
                             </div>
                             <div className="report-item">
                                 <span className="report-label">Average Wake Time</span>
-                                <span className="report-value"><span id="avgWakeTime"></span></span>
+                                <span className="report-value">
+                                    {sleepRecords.length > 0 
+                                        ? calculateAverageTime(sleepRecords.map(record => record.wakeTime))
+                                        : "N/A"}
+                                </span>
                             </div>
                         </div>
                     </div>
                 );
             case 'sleepRecords':
                 return (
-                    <div className="report-section">
-                        <h3>Sleep Records</h3>
-                        <ul>
-                            {sleepRecords.map(record => (
-                                <li key={record.trackingId}>
-                                    <span>{record.date} - {record.sleepTime} to {record.wakeTime} ({record.sleepDuration} hours)</span>
-                                    <button
-                                        onClick={() => handleDeleteSleepRecord(record.trackingId)}
-                                        style={{
-                                            marginLeft: "10px",
-                                            backgroundColor: "#e74c3c",
-                                            color: "white",
-                                            border: "none",
-                                            padding: "5px 10px",
-                                            borderRadius: "5px",
-                                            cursor: "pointer"
-                                        }}
-                                    >
-                                        Delete
-                                    </button>
-                                </li>
-                            ))}
-                        </ul>
+                    <div className="sleep-records">
+                        <h3>Your Sleep Records</h3>
+                        {sleepRecords.length > 0 ? (
+                            <div className="records-table-container">
+                                <table className="records-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Sleep Time</th>
+                                            <th>Wake Time</th>
+                                            <th>Duration</th>
+                                            <th>Quality</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {sleepRecords.map((record, index) => {
+                                            const category = getSleepCategory(parseFloat(record.sleepDuration));
+                                            return (
+                                                <tr key={record.trackingId || index}>
+                                                    <td>{record.date}</td>
+                                                    <td>{record.sleepTime}</td>
+                                                    <td>{record.wakeTime}</td>
+                                                    <td>{parseFloat(record.sleepDuration).toFixed(1)} hrs</td>
+                                                    <td style={{ color: category.color }}>{category.label}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <p className="no-records">No sleep records found. Start recording your sleep to see data here.</p>
+                        )}
                     </div>
                 );
             default:
                 return null;
         }
+    };
+    
+    const calculateAverageTime = (times) => {
+        if (!times || times.length === 0) return "N/A";
+        
+        const totalMinutes = times.reduce((total, time) => {
+            const [hours, minutes] = time.split(':').map(Number);
+            return total + hours * 60 + minutes;
+        }, 0);
+        
+        const avgMinutes = totalMinutes / times.length;
+        const avgHours = Math.floor(avgMinutes / 60) % 24;
+        const avgMins = Math.round(avgMinutes % 60);
+        
+        return `${String(avgHours).padStart(2, '0')}:${String(avgMins).padStart(2, '0')}`;
     };
 
     return (
@@ -386,139 +574,77 @@ const RecordSleep = () => {
                         </svg>
                         <span>SleepSync</span>
                     </a>
+                    <div className="nav-links">
+                        <a href="/dashboard" className="nav-link">Dashboard</a>
+                        <a href="/records" className="nav-link">Records</a>
+                        <a href="/profile" className="nav-link">Profile</a>
+                    </div>
                 </div>
             </nav>
-
-            <div className="stars"></div>
-            <div className="moon"></div>
 
             <div className="main-content">
                 <div className="container">
                     <div className="header-section">
                         <h1>Record Your Sleep</h1>
-                        <button id="track-progress-button" onClick={handleTrackProgressButtonClick}>Track Sleep Progress</button>
+                        <p>Keep track of your sleep patterns to improve your health and wellbeing</p>
+                        <button id="track-progress-button" onClick={handleTrackProgressButtonClick} disabled={isLoading}>
+                            {isLoading ? 'Loading...' : 'Track Sleep Progress'}
+                        </button>
                     </div>
-                    <form id="sleep-form" onSubmit={handleSleepFormSubmit}>
-                        <div className="form-group">
-                            <label htmlFor="date">Sleep Date</label>
-                            <input
-                                type="date"
-                                id="date"
-                                name="date"
-                                value={sleepDate}
-                                onChange={(e) => setSleepDate(e.target.value)}
-                                required
-                            />
+                    
+                    {errorMessage && (
+                        <div className="error-message">
+                            <p>{errorMessage}</p>
                         </div>
-                        <div className="form-group">
-                            <label htmlFor="sleep_time">Sleep Time</label>
-                            <input
-                                type="time"
-                                id="sleep_time"
-                                name="sleep_time"
-                                value={sleepTime}
-                                onChange={(e) => setSleepTime(e.target.value)}
-                                required
-                            />
+                    )}
+                    
+                    <SleepForm
+                        sleepDate={sleepDate}
+                        setSleepDate={setSleepDate}
+                        sleepTime={sleepTime}
+                        setSleepTime={setSleepTime}
+                        wakeDate={wakeDate}
+                        setWakeDate={setWakeDate}
+                        wakeTime={wakeTime}
+                        setWakeTime={setWakeTime}
+                        handleSleepFormSubmit={handleSleepFormSubmit}
+                    />
+                    
+                    {isLoading && (
+                        <div className="loading-spinner">
+                            <div className="spinner"></div>
+                            <p>Processing your sleep data...</p>
                         </div>
-                        <div className="form-group">
-                            <label htmlFor="wake_date">Wake Date</label>
-                            <input
-                                type="date"
-                                id="wake_date"
-                                name="wake_date"
-                                value={wakeDate}
-                                onChange={(e) => setWakeDate(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="wake_time">Wake Time</label>
-                            <input
-                                type="time"
-                                id="wake_time"
-                                name="wake_time"
-                                value={wakeTime}
-                                onChange={(e) => setWakeTime(e.target.value)}
-                                required
-                            />
-                        </div>
-                        <button type="submit" id="save-button">Save</button>
-                    </form>
+                    )}
+                    
                     {showInsights && sleepDuration !== null && (
-                        <>
-                            <SleepInsights duration={sleepDuration} getSleepCategory={getSleepCategory} />
-                            <div className="mt-6">
-                                <div id="task-cards-container" dangerouslySetInnerHTML={{ __html: taskCards }} />
-                                {showDoneButton && (
-                                    <button id="done-button" onClick={handleDoneButtonClick}>
-                                        Mark Tasks as Done
-                                    </button>
-                                )}
-                            </div>
-                        </>
+                        <SleepInsights duration={sleepDuration} getSleepCategory={getSleepCategory} />
+                    )}
+                    
+                    {taskCards && (
+                        <TaskCards taskCards={taskCards} handleDoneButtonClick={handleDoneButtonClick} />
                     )}
                 </div>
             </div>
 
-            <div id="sleepModal" className="modal" style={{ display: isModalOpen ? 'flex' : 'none' }}>
-                <div className="modal-content">
-                    <div className="modal-header">
-                        <h2>Sleep Analysis Dashboard</h2>
-                        <span className="close" onClick={closeModal}>&times;</span>
-                    </div>
+            <SleepModal
+                isModalOpen={isModalOpen}
+                closeModal={() => setIsModalOpen(false)}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                renderTabContent={renderTabContent}
+            />
 
-                    <div className="tabs">
-                        <button
-                            className={`tab-button ${activeTab === 'durationOverTime' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('durationOverTime')}
-                        >
-                            Sleep Duration Over Time
-                        </button>
-                        <button
-                            className={`tab-button ${activeTab === 'durationTrend' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('durationTrend')}
-                        >
-                            Duration Trend
-                        </button>
-                        <button
-                            className={`tab-button ${activeTab === 'patternOverview' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('patternOverview')}
-                        >
-                            Pattern Overview
-                        </button>
-                        <button
-                            className={`tab-button ${activeTab === 'analysisReport' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('analysisReport')}
-                        >
-                            Sleep Analysis Report
-                        </button>
-                        <button
-                            className={`tab-button ${activeTab === 'sleepRecords' ? 'active' : ''}`}
-                            onClick={() => setActiveTab('sleepRecords')}
-                        >
-                            Sleep Records
-                        </button>
-                    </div>
-
-                    <div className="tab-content">
-                        {renderTabContent()}
+            <footer className="site-footer">
+                <div className="footer-content">
+                    <p>&copy; 2025 SleepSync. All rights reserved.</p>
+                    <div className="footer-links">
+                        <a href="/privacy">Privacy Policy</a>
+                        <a href="/terms">Terms of Service</a>
+                        <a href="/support">Support</a>
                     </div>
                 </div>
-            </div>
-
-            {showFireworks && (
-                <div id="fireworks-container" className="fireworks-container">
-                    <div className="firework"></div>
-                    <div className="firework"></div>
-                    <div className="firework"></div>
-                    <div className="firework"></div>
-                    <div className="firework"></div>
-                    <div className="firework"></div>
-                    <div className="firework"></div>
-                    <div className="congratulations-message">Congratulations! You have completed all the activities for the day!</div>
-                </div>
-            )}
+            </footer>
         </>
     );
 };
