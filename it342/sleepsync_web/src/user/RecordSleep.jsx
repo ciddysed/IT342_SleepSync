@@ -5,6 +5,7 @@ import SleepInsights from './components/SleepInsights';
 import SleepForm from './components/SleepForm';
 import SleepModal from './components/SleepModal';
 import TaskCards from './components/TaskCards';
+import AlarmClock from './components/AlarmClock';
 import { initializeTaskCardListeners } from './utils/taskCardListeners';
 import { getSleepCategory } from './utils/sleepCategories';
 
@@ -204,6 +205,25 @@ const RecordSleep = () => {
             }, 3000);
         } else {
             setErrorMessage("Please complete all tasks before proceeding.");
+        }
+    };
+
+    const handleDeleteRecord = async (recordId) => {
+        try {
+            const response = await fetch(`http://localhost:8080/sleep-tracks/${recordId}`, {
+                method: "DELETE",
+            });
+    
+            if (response.ok) {
+                // Remove the deleted record from the state in real-time
+                setSleepRecords((prevRecords) => prevRecords.filter((record) => record.trackingId !== recordId));
+            } else {
+                console.error("Failed to delete sleep record. Status:", response.status);
+                setErrorMessage("An error occurred while deleting the record.");
+            }
+        } catch (error) {
+            console.error("Error deleting sleep record:", error);
+            setErrorMessage("An error occurred while deleting the record.");
         }
     };
     
@@ -520,22 +540,35 @@ const RecordSleep = () => {
                                             <th>Sleep Time</th>
                                             <th>Wake Time</th>
                                             <th>Duration</th>
-                                            <th>Quality</th>
+                                            <th>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {sleepRecords.map((record, index) => {
-                                            const category = getSleepCategory(parseFloat(record.sleepDuration));
-                                            return (
-                                                <tr key={record.trackingId || index}>
-                                                    <td>{record.date}</td>
-                                                    <td>{record.sleepTime}</td>
-                                                    <td>{record.wakeTime}</td>
-                                                    <td>{parseFloat(record.sleepDuration).toFixed(1)} hrs</td>
-                                                    <td style={{ color: category.color }}>{category.label}</td>
-                                                </tr>
-                                            );
-                                        })}
+                                        {sleepRecords.map((record) => (
+                                            <tr key={record.trackingId}>
+                                                <td>{record.date}</td>
+                                                <td>{record.sleepTime}</td>
+                                                <td>{record.wakeTime}</td>
+                                                <td>{record.sleepDuration} hours</td>
+                                                <td>
+                                                    <button
+                                                        className="delete-button"
+                                                        onClick={() => {
+                                                            if (record.trackingId) {
+                                                                const confirmDelete = window.confirm("Are you sure you want to delete this record?");
+                                                                if (confirmDelete) {
+                                                                    handleDeleteRecord(record.trackingId);
+                                                                }
+                                                            } else {
+                                                                console.error("Record ID is undefined:", record);
+                                                            }
+                                                        }}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
                                     </tbody>
                                 </table>
                             </div>
@@ -624,6 +657,8 @@ const RecordSleep = () => {
                     {taskCards && (
                         <TaskCards taskCards={taskCards} handleDoneButtonClick={handleDoneButtonClick} />
                     )}
+                    
+                    <AlarmClock wakeTime={wakeTime} wakeDate={wakeDate} />
                 </div>
             </div>
 

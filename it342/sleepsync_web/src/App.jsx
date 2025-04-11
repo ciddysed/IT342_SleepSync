@@ -6,6 +6,7 @@ import UserSleepSchedule from "./user/usersleepsched";
 import Landing from "./user/landing";
 import RecordSleep from "./user/RecordSleep";
 import UserSleepProgress from "./user/UserSleepProgress"; // Import UserSleepProgress
+import AlarmClock from "./user/components/AlarmClock";
 
 const App = () => {
     return (
@@ -17,6 +18,7 @@ const App = () => {
                 <Route path="/user/landing" element={<Landing />} />
                 <Route path="/user/record-sleep" element={<RecordSleep />} />
                 <Route path="/user/sleep-progress" element={<UserSleepProgress />} /> {/* Add UserSleepProgress path */}
+                <Route path="/user/alarm-clock" element={<AlarmClock />} />
                 <Route path="*" element={<div>Page not found</div>} /> {/* Fallback route */}
             </Routes>
         </Router>
