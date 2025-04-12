@@ -34,8 +34,12 @@ const Login = () => {
         }
     };
 
+    const handleGoogleRedirect = () => {
+        window.location.href = "https://accounts.google.com/o/oauth2/v2/auth/oauthchooseaccount?response_type=code&client_id=641212688069-2tl0q9ei38toetff97rcic46agujsiab.apps.googleusercontent.com&scope=email%20profile&state=C-DQirmvwVNMjc2zdFQIDSPt6iOEpyC8SM0revx1aqA%3D&redirect_uri=http%3A%2F%2Flocalhost%3A8080%2Flogin%2Foauth2%2Fcode%2Fgoogle&service=lso&o2v=2&ddm=1&flowName=GeneralOAuthFlow";
+    };
+
     return (
-        <div style={{ fontFamily: "'Inter', sans-serif", minHeight: "100vh", margin: 0, position: "relative", overflow: "hidden",  color: "white" }}>
+        <div style={{ fontFamily: "'Inter', sans-serif", minHeight: "100vh", margin: 0, position: "relative", overflow: "hidden", color: "white" }}>
             {/* Background layers */}
             <div style={{
                 position: "fixed", top: 0, left: 0, width: "100%", height: "100%",
@@ -147,6 +151,18 @@ const Login = () => {
                         Login
                     </button>
                 </form>
+
+                <button
+                    onClick={handleGoogleRedirect}
+                    style={{
+                        marginTop: "20px", padding: "14px", background: "#4285F4", color: "white",
+                        border: "none", borderRadius: "10px", cursor: "pointer", fontSize: "1.1rem", fontWeight: "500",
+                        display: "flex", alignItems: "center", justifyContent: "center", gap: "10px"
+                    }}
+                >
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Google_%22G%22_Logo.svg/512px-Google_%22G%22_Logo.svg.png" alt="Google Logo" style={{ width: "20px", height: "20px" }} />
+                    Sign in or Continue with Google
+                </button>
 
                 <div style={{
                     marginTop: "25px", textAlign: "center", padding: "15px",

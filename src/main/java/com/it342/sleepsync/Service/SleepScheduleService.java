@@ -33,26 +33,26 @@ public class SleepScheduleService {
     }
 
     public List<SleepSchedule> getSleepSchedulesByUser(Long userId) {
-        return sleepScheduleRepository.findByUserUserID(userId);
+        return sleepScheduleRepository.findByUserUserId(userId);
     }
 
     public SleepSchedule addSleepScheduleForUser(Long userId, SleepSchedule sleepSchedule) {
         User user = new User(); // Assuming User object is fetched elsewhere
-        user.setUserID(userId);
+        user.setUserId(userId); // Updated method name
         sleepSchedule.setUser(user);
         return sleepScheduleRepository.save(sleepSchedule);
     }
 
     public void deleteSleepScheduleForUser(Long userId, Long scheduleId) {
         Optional<SleepSchedule> schedule = sleepScheduleRepository.findById(scheduleId);
-        if (schedule.isPresent() && schedule.get().getUser().getUserID().equals(userId)) {
+        if (schedule.isPresent() && schedule.get().getUser().getUserId().equals(userId)) { // Updated method name
             sleepScheduleRepository.deleteById(scheduleId);
         }
     }
 
     public SleepSchedule updateSleepScheduleForUser(Long userId, Long scheduleId, SleepSchedule updatedSchedule) {
         Optional<SleepSchedule> existingSchedule = sleepScheduleRepository.findById(scheduleId);
-        if (existingSchedule.isPresent() && existingSchedule.get().getUser().getUserID().equals(userId)) {
+        if (existingSchedule.isPresent() && existingSchedule.get().getUser().getUserId().equals(userId)) { // Updated method name
             updatedSchedule.setId(scheduleId);
             updatedSchedule.setUser(existingSchedule.get().getUser());
             return sleepScheduleRepository.save(updatedSchedule);

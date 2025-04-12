@@ -1,37 +1,69 @@
+// SleepInsights.jsx
 import React from 'react';
 
 const SleepInsights = ({ duration, getSleepCategory }) => {
     const category = getSleepCategory(duration);
-
-    if (!category) return null;
-
+    
+    const getRecommendations = () => {
+        if (duration < 6) {
+            return [
+                "Try to go to bed 30-60 minutes earlier tonight",
+                "Limit screen time 2 hours before bedtime",
+                "Avoid caffeine after noon",
+                "Keep your bedroom cool and dark"
+            ];
+        } else if (duration < 7) {
+            return [
+                "You're close to the recommended amount! Try to get to bed 15-30 minutes earlier",
+                "Maintain a consistent sleep schedule",
+                "Consider a relaxing bedtime routine"
+            ];
+        } else if (duration <= 9) {
+            return [
+                "Great job maintaining healthy sleep habits!",
+                "Keep your sleep schedule consistent, even on weekends",
+                "Continue to prioritize good sleep hygiene"
+            ];
+        } else {
+            return [
+                "You might be oversleeping. Try to maintain 7-9 hours of sleep",
+                "Ensure you're getting enough physical activity during the day",
+                "Check if your sleep quality is good - you may be compensating for poor quality"
+            ];
+        }
+    };
+    
+    const recommendations = getRecommendations();
+    
     return (
-        <div className="mt-6">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">Sleep Insights</h2>
-            <div className="flex flex-wrap justify-center gap-6">
-                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
-                    <h3 className="font-semibold text-green-400 mb-2">Pros</h3>
-                    <p className="text-gray-300 text-center">{category.pros}</p>
+        <div className="sleep-insights">
+            <h2 className="sleep-insights-title">Your Sleep Insights</h2>
+            <div className="insights-grid">
+                <div className="insight-card">
+                    <h3>Sleep Duration</h3>
+                    <p className="insight-value">{duration.toFixed(1)} hours</p>
+                    <p>
+                        {category.description}
+                    </p>
                 </div>
-                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
-                    <h3 className="font-semibold text-red-400 mb-2">Cons</h3>
-                    <p className="text-gray-300 text-center">{category.cons}</p>
+                
+                <div className="insight-card">
+                    <h3>Sleep Quality Category</h3>
+                    <p className="insight-category" style={{ color: category.color }}>
+                        {category.label}
+                    </p>
+                    <p>
+                        Adults typically need 7-9 hours of quality sleep per night.
+                    </p>
                 </div>
-                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
-                    <h3 className="font-semibold text-gray-400 mb-2">Health Issues</h3>
-                    <p className="text-gray-300 text-center">{category.healthIssues}</p>
-                </div>
-                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
-                    <h3 className="font-semibold text-gray-400 mb-2">Cognitive Effects</h3>
-                    <p className="text-gray-300 text-center">{category.cognitiveEffects}</p>
-                </div>
-                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
-                    <h3 className="font-semibold text-gray-400 mb-2">Productivity Impact</h3>
-                    <p className="text-gray-300 text-center">{category.productivityImpact}</p>
-                </div>
-                <div className="box bg-gradient-to-br from-gray-800 to-gray-900 shadow-lg w-48 h-48 flex flex-col justify-center items-center rounded-lg border border-gray-700">
-                    <h3 className="font-semibold text-gray-400 mb-2">Recommended For</h3>
-                    <p className="text-gray-300 text-center">{category.recommendedFor}</p>
+                
+                <div className="insight-card">
+                    <h3>Recommendations</h3>
+                    <ul className="recommendations-list">
+                        {recommendations.map((rec, index) => (
+                            <li key={index}>{rec}</li>
+                        ))}
+                    </ul>
                 </div>
             </div>
         </div>

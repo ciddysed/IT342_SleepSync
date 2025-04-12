@@ -43,8 +43,7 @@ public class UserService {
     public User updateUser(Long id, User userDetails) {
         User user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("User not found"));
         user.setEmail(userDetails.getEmail());
-        user.setFirstName(userDetails.getFirstName());
-        user.setLastName(userDetails.getLastName());
+
         // Update relationships if needed
         user.setSleepTracks(userDetails.getSleepTracks());
         user.setRelaxationRoutines(userDetails.getRelaxationRoutines());

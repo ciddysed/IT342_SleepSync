@@ -22,7 +22,7 @@ public class SleepSchedule {
     private LocalTime preferredWakeTime;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false) // Foreign key to User
+    @JoinColumn(name = "user_id", nullable = false) // Ensure column name matches `userId` in `User`
     private User user;
 
     // Getters

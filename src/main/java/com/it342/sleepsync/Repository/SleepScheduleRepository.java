@@ -6,5 +6,5 @@ import java.util.List;
 import com.it342.sleepsync.Entity.SleepSchedule;
 
 public interface SleepScheduleRepository extends JpaRepository<SleepSchedule, Long> {
-    List<SleepSchedule> findByUserUserID(Long userId); // Fetch schedules by user ID
+    List<SleepSchedule> findByUserUserId(Long userId); // Updated method name
 }
