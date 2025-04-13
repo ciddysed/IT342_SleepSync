@@ -1,14 +1,27 @@
 import React from 'react';
 
 const TaskCards = ({ taskCards, handleDoneButtonClick }) => {
-    if (!Array.isArray(taskCards)) {
+    let parsedTaskCards = [];
+
+    // Parse raw HTML taskCards if necessary
+    if (typeof taskCards === 'string') {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(taskCards, 'text/html');
+        parsedTaskCards = Array.from(doc.querySelectorAll('.task-card')).map((card) => {
+            const description = card.querySelector('span')?.textContent || 'Unknown Task';
+            const completed = card.querySelector('input[type="checkbox"]')?.checked || false;
+            return { description, completed };
+        });
+    } else if (Array.isArray(taskCards)) {
+        parsedTaskCards = taskCards;
+    } else {
         console.error("Invalid taskCards data:", taskCards);
         return <p>Error: Invalid task data</p>;
     }
 
     return (
         <div className="task-cards-container">
-            {taskCards.map((task, index) => (
+            {parsedTaskCards.map((task, index) => (
                 <div key={index} className="task-card">
                     <input
                         type="checkbox"
