@@ -1,8 +1,13 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { logoutUser } from "../utils/auth";
 
 const Landing = () => {
     const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logoutUser(navigate); // Use the logout utility
+    };
 
     const handleNavigate = (path) => {
         navigate(path);
@@ -40,7 +45,7 @@ const Landing = () => {
                     alignItems: "center",
                     padding: "0 2rem"
                 }}>
-                    <a href="#" style={{
+                    <button onClick={() => handleNavigate("/user/landing")} style={{
                         display: "flex",
                         alignItems: "center",
                         gap: "8px",
@@ -48,18 +53,21 @@ const Landing = () => {
                         textDecoration: "none",
                         fontSize: "1.5rem",
                         fontWeight: "bold",
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
                         transition: "transform 0.3s ease"
                     }}>
                         <svg viewBox="0 0 24 24" style={{ width: "24px", height: "24px", fill: "white" }}>
                             <path d="M19 7h-8v8H3V7H1v10h2v3c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-3h2V7h-2zM7 19h10v-6H7v6z"/>
                         </svg>
                         SleepSync
-                    </a>
+                    </button>
                     <div style={{
                         display: "flex",
                         gap: "1.5rem"
                     }}>
-                        <a href="#" style={{
+                        <button onClick={() => handleNavigate("/user/landing")} style={{
                             color: "white",
                             textDecoration: "none",
                             fontWeight: 500,
@@ -68,23 +76,27 @@ const Landing = () => {
                             transition: "all 0.3s ease",
                             display: "flex",
                             alignItems: "center",
-                            gap: "0.5rem"
+                            gap: "0.5rem",
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer"
                         }}>
                             <i className="fas fa-home"></i> Home
-                        </a>
-                        <a href="#" style={{
+                        </button>
+                        <button onClick={handleLogout} style={{
                             color: "white",
-                            textDecoration: "none",
+                            background: "none",
+                            border: "none",
                             fontWeight: 500,
                             padding: "0.5rem 1rem",
                             borderRadius: "8px",
-                            transition: "all 0.3s ease",
+                            cursor: "pointer",
                             display: "flex",
                             alignItems: "center",
                             gap: "0.5rem"
                         }}>
-                            <i className="fas fa-sign-in-alt"></i> Login
-                        </a>
+                            <i className="fas fa-sign-out-alt"></i> Logout
+                        </button>
                     </div>
                 </div>
             </nav>

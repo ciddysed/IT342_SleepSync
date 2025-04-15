@@ -2,6 +2,8 @@ package com.it342.sleepsync.Controller;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 import com.it342.sleepsync.Entity.User;
 import com.it342.sleepsync.Service.UserService;
+import com.it342.sleepsync.Util.JwtUtil;
 
 @RestController
 @RequestMapping("/users")
@@ -58,14 +61,18 @@ public class UserController {
 
     @GetMapping("/login")
     public ResponseEntity<?> loginUser(
-            @RequestParam String email, // Changed from username to email
+            @RequestParam String email,
             @RequestParam String password) {
         try {
-            Optional<User> user = userService.validateLogin(email, password); // Pass email instead of username
+            Optional<User> user = userService.validateLogin(email, password);
             if (user.isPresent()) {
-                return ResponseEntity.ok(user.get()); // Ensure the user object contains the id field
+                String token = JwtUtil.generateToken(user.get().getEmail()); // Generate JWT token
+                Map<String, Object> response = new HashMap<>();
+                response.put("user", user.get());
+                response.put("token", token); // Include token in the response
+                return ResponseEntity.ok(response);
             } else {
-                return ResponseEntity.status(401).body("Invalid email or password."); // Updated error message
+                return ResponseEntity.status(401).body("Invalid email or password.");
             }
         } catch (Exception e) {
             e.printStackTrace();

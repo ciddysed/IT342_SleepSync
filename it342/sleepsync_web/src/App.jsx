@@ -8,6 +8,7 @@ import RecordSleep from "./user/RecordSleep";
 import UserSleepProgress from "./user/UserSleepProgress"; // Import UserSleepProgress
 import AlarmClock from "./user/components/AlarmClock";
 import SmartAlarm from "./user/SmartAlarm"; // Import SmartAlarm
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const App = () => {
     return (
@@ -15,12 +16,12 @@ const App = () => {
             <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
-                <Route path="/user/sleep-schedule" element={<UserSleepSchedule />} />
-                <Route path="/user/landing" element={<Landing />} />
-                <Route path="/user/record-sleep" element={<RecordSleep />} />
-                <Route path="/user/sleep-progress" element={<UserSleepProgress />} /> {/* Add UserSleepProgress path */}
+                <Route path="/user/sleep-schedule" element={<ProtectedRoute><UserSleepSchedule /></ProtectedRoute>} />
+                <Route path="/user/landing" element={<ProtectedRoute><Landing /></ProtectedRoute>} />
+                <Route path="/user/record-sleep" element={<ProtectedRoute><RecordSleep /></ProtectedRoute>} />
+                <Route path="/user/sleep-progress" element={<ProtectedRoute><UserSleepProgress /></ProtectedRoute>} /> {/* Add UserSleepProgress path */}
                 <Route path="/user/alarm-clock" element={<AlarmClock />} />
-                <Route path="/user/smart-alarm" element={<SmartAlarm />} /> {/* Add SmartAlarm route */}
+                <Route path="/user/smart-alarm" element={<ProtectedRoute><SmartAlarm /></ProtectedRoute>} /> {/* Add SmartAlarm route */}
                 <Route path="*" element={<div>Page not found</div>} /> {/* Fallback route */}
             </Routes>
         </Router>

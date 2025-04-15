@@ -15,13 +15,15 @@ const Login = () => {
             });
 
             if (response.ok) {
-                const user = await response.json();
-                if (user && user.userID) {
-                    localStorage.setItem("userId", user.userID);
+                const data = await response.json();
+                if (data && data.token) {
+                    console.log("JWT Token:", data.token); // Log the JWT token
+                    localStorage.setItem("token", data.token); // Store the token in localStorage
+                    localStorage.setItem("userId", data.user.userID); // Store the user ID
                     setError("");
                     navigate("/user/landing");
                 } else {
-                    setError("Login failed. User ID not found.");
+                    setError("Login failed. Token not found.");
                 }
             } else if (response.status === 401) {
                 setError("Invalid email or password.");
