@@ -10,8 +10,11 @@ import { initializeTaskCardListeners } from './utils/taskCardListeners';
 import { getSleepCategory } from './utils/sleepCategories';
 import { fetchSleepRecords, recordSleepTime, deleteSleepRecord } from './utils/sleepApi';
 import { renderCharts, calculateAverageTime } from './utils/chartHelpers';
+import { useNavigate } from "react-router-dom";
+import { logoutUser } from "../utils/auth";
 
 const RecordSleep = () => {
+    const [sidebarVisible, setSidebarVisible] = useState(true);
     const [sleepDate, setSleepDate] = useState(() => new Date().toISOString().split('T')[0]);
     const [wakeDate, setWakeDate] = useState(() => {
         const tomorrow = new Date();
@@ -34,6 +37,20 @@ const RecordSleep = () => {
     const sleepChartRef = useRef(null);
     const sleepLineChartRef = useRef(null);
     const sleepAreaChartRef = useRef(null);
+
+    const navigate = useNavigate();
+
+    const toggleSidebar = () => {
+        setSidebarVisible(!sidebarVisible);
+    };
+
+    const handleNavigate = (path) => {
+        navigate(path);
+    };
+
+    const handleLogout = () => {
+        logoutUser(navigate);
+    };
 
     useEffect(() => {
         if (taskCards) initializeTaskCardListeners();
@@ -134,7 +151,6 @@ const RecordSleep = () => {
                                 <span>Optimal Days</span>
                                 <span>{sleepRecords.filter(r => parseFloat(r.sleepDuration) >= 7 && parseFloat(r.sleepDuration) <= 9).length}</span>
                             </div>
-                            {/* ...other report items... */}
                         </div>
                     </div>
                 );
@@ -171,50 +187,112 @@ const RecordSleep = () => {
     };
 
     return (
-        <>
-            <nav className="nav-bar">
-                <div className="nav-content">
-                    <a href="/user/landing" className="nav-logo">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M19 7h-8v8H3V7H1v10h2v3c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-3h2V7h-2z" />
-                        </svg>
-                        <span>SleepSync</span>
-                    </a>
-                    <div className="nav-links">
-                        <a href="/dashboard" className="nav-link">Dashboard</a>
-                        <a href="/records" className="nav-link">Records</a>
-                        <a href="/profile" className="nav-link">Profile</a>
+        <div className="sleepsync-app">
+            {/* Sidebar */}
+            <aside className={`sidebar ${sidebarVisible ? 'sidebar-visible' : 'sidebar-hidden'}`}>
+                <div className="sidebar-header">
+                    <svg viewBox="0 0 24 24" style={{ width: "32px", height: "32px", fill: "white", marginRight: "10px" }}>
+                        <path d="M19 7h-8v8H3V7H1v10h2v3c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-3h2V7h-2zM7 19h10v-6H7v6z"/>
+                    </svg>
+                    <div>
+                        <h5 className="sidebar-title">SleepSync</h5>
+                        <p className="sidebar-subtitle">Sleep tracking dashboard</p>
                     </div>
                 </div>
-            </nav>
-            <div className="main-content">
-                <div className="container">
-                    <div className="header-section">
-                        <h1>Record Your Sleep</h1>
-                        <button onClick={handleTrackProgressButtonClick} disabled={isLoading}>
-                            {isLoading ? 'Loading...' : 'Track Sleep Progress'}
+
+                <div className="sidebar-search">
+                    <input type="text" placeholder="Search" className="sidebar-search-input" />
+                    <i className="sidebar-search-icon">🔍</i>
+                </div>
+
+                <ul className="sidebar-menu">
+                    <li className="sidebar-menu-item">
+                        <button 
+                            onClick={() => handleNavigate("/user/landing")}
+                            className="sidebar-menu-button"
+                        >
+                            <i className="sidebar-menu-icon">🏠</i> Dashboard
                         </button>
+                    </li>
+                    <li className="sidebar-menu-item">
+                        <button
+                            onClick={() => handleNavigate("/user/sleep-schedule")}
+                            className="sidebar-menu-button"
+                        >
+                            <i className="sidebar-menu-icon">📅</i> Sleep Schedule
+                        </button>
+                    </li>
+                    <li className="sidebar-menu-item active">
+                        <button
+                            onClick={() => handleNavigate("/user/record-sleep")}
+                            className="sidebar-menu-button active"
+                        >
+                            <i className="sidebar-menu-icon">🛌</i> Record Sleep
+                        </button>
+                    </li>
+                    <li className="sidebar-menu-item">
+                        <button
+                            onClick={() => handleNavigate("/user/sleep-progress")}
+                            className="sidebar-menu-button"
+                        >
+                            <i className="sidebar-menu-icon">📊</i> Sleep Progress
+                        </button>
+                    </li>
+                    <li className="sidebar-menu-item">
+                        <button
+                            onClick={() => handleNavigate("/sleep-tips")}
+                            className="sidebar-menu-button"
+                        >
+                            <i className="sidebar-menu-icon">💡</i> Sleep Tips
+                        </button>
+                    </li>
+                    <li className="sidebar-menu-item">
+                        <button
+                            onClick={handleLogout}
+                            className="sidebar-menu-button"
+                        >
+                            <i className="sidebar-menu-icon">🚪</i> Logout
+                        </button>
+                    </li>
+                </ul>
+            </aside>
+
+            {/* Main Wrapper */}
+            <section id="wrapper" className={`main-wrapper ${sidebarVisible ? 'main-wrapper-with-sidebar' : 'main-wrapper-without-sidebar'}`}>
+                {/* Navigation */}
+                <nav className="main-nav">
+                    <div className="nav-left">
+                        <button 
+                            onClick={toggleSidebar}
+                            className="nav-toggle-btn"
+                        >
+                            ☰
+                        </button>
+                        <a className="nav-brand">Sleep<span className="nav-brand-highlight">Sync</span></a>
                     </div>
-                    {errorMessage && <div className="error-message"><p>{errorMessage}</p></div>}
-                    <SleepForm {...{ sleepDate, setSleepDate, sleepTime, setSleepTime, wakeDate, setWakeDate, wakeTime, setWakeTime, handleSleepFormSubmit }} />
-                    {isLoading && <div className="loading-spinner"><p>Processing your sleep data...</p></div>}
-                    {showInsights && sleepDuration !== null && <SleepInsights duration={sleepDuration} getSleepCategory={getSleepCategory} />}
-                    {taskCards && <TaskCards taskCards={taskCards} handleDoneButtonClick={handleDoneButtonClick} />}
-                    <AlarmClock wakeTime={wakeTime} wakeDate={wakeDate} />
-                </div>
-            </div>
-            <SleepModal {...{ isModalOpen, closeModal: () => setIsModalOpen(false), activeTab, setActiveTab, renderTabContent }} />
-            <footer className="site-footer">
-                <div className="footer-content">
-                    <p>&copy; 2025 SleepSync. All rights reserved.</p>
-                    <div className="footer-links">
-                        <a href="/privacy">Privacy Policy</a>
-                        <a href="/terms">Terms of Service</a>
-                        <a href="/support">Support</a>
+                </nav>
+
+                {/* Main Content */}
+                <div className="main-content">
+                    <div className="container">
+                        <div className="header-section">
+                            <h1>Record Your Sleep</h1>
+                            <button onClick={handleTrackProgressButtonClick} disabled={isLoading}>
+                                {isLoading ? 'Loading...' : 'Track Sleep Progress'}
+                            </button>
+                        </div>
+                        {errorMessage && <div className="error-message"><p>{errorMessage}</p></div>}
+                        <SleepForm {...{ sleepDate, setSleepDate, sleepTime, setSleepTime, wakeDate, setWakeDate, wakeTime, setWakeTime, handleSleepFormSubmit }} />
+                        {isLoading && <div className="loading-spinner"><p>Processing your sleep data...</p></div>}
+                        {showInsights && sleepDuration !== null && <SleepInsights duration={sleepDuration} getSleepCategory={getSleepCategory} />}
+                        {taskCards && <TaskCards taskCards={taskCards} handleDoneButtonClick={handleDoneButtonClick} />}
+                        <AlarmClock wakeTime={wakeTime} wakeDate={wakeDate} />
                     </div>
                 </div>
-            </footer>
-        </>
+
+                <SleepModal {...{ isModalOpen, closeModal: () => setIsModalOpen(false), activeTab, setActiveTab, renderTabContent }} />
+            </section>
+        </div>
     );
 };
 

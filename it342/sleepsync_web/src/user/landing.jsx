@@ -1,311 +1,327 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { logoutUser } from "../utils/auth";
+import "./Landing.css"; // Import the CSS file
 
 const Landing = () => {
     const navigate = useNavigate();
+    const [sidebarVisible, setSidebarVisible] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     const handleLogout = () => {
-        logoutUser(navigate); // Use the logout utility
+        logoutUser(navigate);
     };
 
     const handleNavigate = (path) => {
         navigate(path);
     };
 
+    const toggleSidebar = () => {
+        setSidebarVisible(!sidebarVisible);
+    };
+
+    const openModal = () => {
+        setIsModalOpen(true);
+    };
+
+    const closeModal = () => {
+        setIsModalOpen(false);
+    };
+
     return (
-        <div style={{
-            fontFamily: "'Inter', sans-serif",
-            minHeight: "100vh",
-            margin: 0,
-            position: "relative",
-            overflow: "hidden",
-            background: "linear-gradient(135deg, rgba(44, 24, 48, 0.9) 0%, rgba(107, 78, 113, 0.9) 100%)",
-            color: "white",
-            display: "flex",
-            flexDirection: "column"
-        }}>
-            {/* Navigation Bar */}
-            <nav style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                width: "100%",
-                background: "rgba(255, 255, 255, 0.1)",
-                backdropFilter: "blur(10px)",
-                zIndex: 1000,
-                padding: "1rem 0",
-                borderBottom: "1px solid rgba(255, 255, 255, 0.1)"
-            }}>
-                <div style={{
-                    maxWidth: "1200px",
-                    margin: "0 auto",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    padding: "0 2rem"
-                }}>
-                    <button onClick={() => handleNavigate("/user/landing")} style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        color: "white",
-                        textDecoration: "none",
-                        fontSize: "1.5rem",
-                        fontWeight: "bold",
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        transition: "transform 0.3s ease"
-                    }}>
-                        <svg viewBox="0 0 24 24" style={{ width: "24px", height: "24px", fill: "white" }}>
-                            <path d="M19 7h-8v8H3V7H1v10h2v3c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-3h2V7h-2zM7 19h10v-6H7v6z"/>
-                        </svg>
-                        SleepSync
-                    </button>
-                    <div style={{
-                        display: "flex",
-                        gap: "1.5rem"
-                    }}>
-                        <button onClick={() => handleNavigate("/user/landing")} style={{
-                            color: "white",
-                            textDecoration: "none",
-                            fontWeight: 500,
-                            padding: "0.5rem 1rem",
-                            borderRadius: "8px",
-                            transition: "all 0.3s ease",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer"
-                        }}>
-                            <i className="fas fa-home"></i> Home
-                        </button>
-                        <button onClick={handleLogout} style={{
-                            color: "white",
-                            background: "none",
-                            border: "none",
-                            fontWeight: 500,
-                            padding: "0.5rem 1rem",
-                            borderRadius: "8px",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem"
-                        }}>
-                            <i className="fas fa-sign-out-alt"></i> Logout
-                        </button>
+        <div className="sleepsync-app">
+            {/* Sidebar */}
+            <aside className={`sidebar ${sidebarVisible ? 'sidebar-visible' : 'sidebar-hidden'}`}>
+                <div className="sidebar-header">
+                    <svg viewBox="0 0 24 24" style={{ width: "32px", height: "32px", fill: "white", marginRight: "10px" }}>
+                        <path d="M19 7h-8v8H3V7H1v10h2v3c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2v-3h2V7h-2zM7 19h10v-6H7v6z"/>
+                    </svg>
+                    <div>
+                        <h5 className="sidebar-title">SleepSync</h5>
+                        <p className="sidebar-subtitle">Sleep tracking dashboard</p>
                     </div>
                 </div>
-            </nav>
 
-            {/* Background Elements */}
-            <div style={{
-                position: "fixed",
-                width: "100%",
-                height: "100%",
-                pointerEvents: "none",
-                background: `
-                    radial-gradient(2px 2px at 20px 30px, white, rgba(0,0,0,0)),
-                    radial-gradient(2px 2px at 40px 70px, white, rgba(0,0,0,0)),
-                    radial-gradient(2px 2px at 50px 160px, white, rgba(0,0,0,0)),
-                    radial-gradient(2px 2px at 90px 40px, white, rgba(0,0,0,0)),
-                    radial-gradient(2px 2px at 130px 80px, white, rgba(0,0,0,0)),
-                    radial-gradient(2px 2px at 160px 120px, white, rgba(0,0,0,0))`,
-                animation: "twinkle 5s infinite",
-                zIndex: 0
-            }}></div>
+                <div className="sidebar-search">
+                    <input type="text" placeholder="Search" className="sidebar-search-input" />
+                    <i className="sidebar-search-icon">🔍</i>
+                </div>
 
-            <div style={{
-                position: "fixed",
-                top: "85px",
-                right: "15px",
-                width: "100px",
-                height: "100px",
-                background: "radial-gradient(circle at 30% 30%, #ffffff, #f4f4f4)",
-                borderRadius: "50%",
-                boxShadow: "0 0 50px rgba(255, 255, 255, 0.5)",
-                animation: "moonGlow 4s infinite ease-in-out",
-                zIndex: 0
-            }}></div>
-
-            <style>
-                {`
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                @keyframes twinkle {
-                    0%, 100% { opacity: 0.8; }
-                    50% { opacity: 0.5; }
-                }
-                @keyframes moonGlow {
-                    0%, 100% { box-shadow: 0 0 50px rgba(255, 255, 255, 0.5); }
-                    50% { box-shadow: 0 0 70px rgba(255, 255, 255, 0.7); }
-                }
-                `}
-            </style>
-
-            {/* Main Content */}
-            <div style={{
-                marginTop: "80px",
-                flex: 1,
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                padding: "2rem",
-                position: "relative",
-                zIndex: 1
-            }}>
-                <div style={{
-                    background: "rgba(255, 255, 255, 0.1)",
-                    backdropFilter: "blur(10px)",
-                    borderRadius: "20px",
-                    padding: "3rem",
-                    maxWidth: "1000px",
-                    width: "100%",
-                    animation: "fadeIn 1s ease-out"
-                }}>
-                    <h1 style={{
-                        fontSize: "3rem",
-                        marginBottom: "1.5rem",
-                        color: "white",
-                        textShadow: "2px 2px 4px rgba(0, 0, 0, 0.2)"
-                    }}>Welcome to SleepSync</h1>
-                    
-                    <p style={{
-                        fontSize: "1.2rem",
-                        marginBottom: "2rem",
-                        color: "rgba(255, 255, 255, 0.9)",
-                        lineHeight: 1.6
-                    }}>Your journey to better sleep starts here. Navigate to your personalized dashboard to manage your sleep schedule efficiently.</p>
-
-                    {/* Button Container */}
-                    <div style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-                        gap: "1.5rem",
-                        marginTop: "2rem"
-                    }}>
+                <ul className="sidebar-menu">
+                    <li className="sidebar-menu-item active">
+                        <button 
+                            onClick={() => handleNavigate("/user/landing")}
+                            className="sidebar-menu-button active"
+                        >
+                            <i className="sidebar-menu-icon">🏠</i> Dashboard
+                        </button>
+                    </li>
+                    <li className="sidebar-menu-item">
                         <button
                             onClick={() => handleNavigate("/user/sleep-schedule")}
-                            style={{
-                                background: "rgba(255, 255, 255, 0.1)",
-                                color: "white",
-                                textDecoration: "none",
-                                padding: "2rem",
-                                borderRadius: "20px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "1rem",
-                                transition: "all 0.3s ease",
-                                backdropFilter: "blur(5px)",
-                                fontWeight: 500,
-                                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                                width: "100%",
-                                height: "100%",
-                                border: "none",
-                                cursor: "pointer"
-                            }}
+                            className="sidebar-menu-button"
                         >
-                            <i className="fas fa-calendar-alt" style={{ fontSize: "1.5rem" }}></i> Sleep Schedule
+                            <i className="sidebar-menu-icon">📅</i> Sleep Schedule
                         </button>
-
+                    </li>
+                    <li className="sidebar-menu-item">
                         <button
                             onClick={() => handleNavigate("/user/record-sleep")}
-                            style={{
-                                background: "rgba(255, 255, 255, 0.1)",
-                                color: "white",
-                                textDecoration: "none",
-                                padding: "2rem",
-                                borderRadius: "20px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "1rem",
-                                transition: "all 0.3s ease",
-                                backdropFilter: "blur(5px)",
-                                fontWeight: 500,
-                                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                                width: "100%",
-                                height: "100%",
-                                border: "none",
-                                cursor: "pointer"
-                            }}
+                            className="sidebar-menu-button"
                         >
-                            <i className="fas fa-bed" style={{ fontSize: "1.5rem" }}></i> Record Sleep
+                            <i className="sidebar-menu-icon">🛌</i> Record Sleep
                         </button>
-
+                    </li>
+                    <li className="sidebar-menu-item">
                         <button
                             onClick={() => handleNavigate("/user/sleep-progress")}
-                            style={{
-                                background: "rgba(255, 255, 255, 0.1)",
-                                color: "white",
-                                textDecoration: "none",
-                                padding: "2rem",
-                                borderRadius: "20px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "1rem",
-                                transition: "all 0.3s ease",
-                                backdropFilter: "blur(5px)",
-                                fontWeight: 500,
-                                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                                width: "100%",
-                                height: "100%",
-                                border: "none",
-                                cursor: "pointer"
-                            }}
+                            className="sidebar-menu-button"
                         >
-                            <i className="fas fa-chart-line" style={{ fontSize: "1.5rem" }}></i> Sleep Progress
+                            <i className="sidebar-menu-icon">📊</i> Sleep Progress
                         </button>
-
+                    </li>
+                    <li className="sidebar-menu-item">
                         <button
                             onClick={() => handleNavigate("/sleep-tips")}
-                            style={{
-                                background: "rgba(255, 255, 255, 0.1)",
-                                color: "white",
-                                textDecoration: "none",
-                                padding: "2rem",
-                                borderRadius: "20px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                gap: "1rem",
-                                transition: "all 0.3s ease",
-                                backdropFilter: "blur(5px)",
-                                fontWeight: 500,
-                                boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-                                width: "100%",
-                                height: "100%",
-                                border: "none",
-                                cursor: "pointer"
-                            }}
+                            className="sidebar-menu-button"
                         >
-                            <i className="fas fa-lightbulb" style={{ fontSize: "1.5rem" }}></i> Sleep Tips
+                            <i className="sidebar-menu-icon">💡</i> Sleep Tips
+                        </button>
+                    </li>
+                    <li className="sidebar-menu-item">
+                        <button
+                            onClick={handleLogout}
+                            className="sidebar-menu-button"
+                        >
+                            <i className="sidebar-menu-icon">🚪</i> Logout
+                        </button>
+                    </li>
+                </ul>
+            </aside>
+
+            {/* Main Wrapper */}
+            <section id="wrapper" className={`main-wrapper ${sidebarVisible ? 'main-wrapper-with-sidebar' : 'main-wrapper-without-sidebar'}`}>
+                {/* Navigation */}
+                <nav className="main-nav">
+                    <div className="nav-left">
+                        <button 
+                            onClick={toggleSidebar}
+                            className="nav-toggle-btn"
+                        >
+                            ☰
+                        </button>
+                        <a className="nav-brand">Sleep<span className="nav-brand-highlight">Sync</span></a>
+                    </div>
+                    <div className="nav-right">
+                        <button className="nav-notification-btn">
+                            🔔
+                            <span className="nav-notification-badge">2</span>
+                        </button>
+                        <button 
+                            onClick={handleLogout}
+                            className="nav-profile-btn"
+                        >
+                            👤
                         </button>
                     </div>
-                </div>
-            </div>
+                </nav>
 
-            {/* Footer */}
-            <footer style={{
-                background: "rgba(255, 255, 255, 0.1)",
-                backdropFilter: "blur(10px)",
-                padding: "1.5rem",
-                textAlign: "center",
-                position: "relative",
-                zIndex: 1,
-                borderTop: "1px solid rgba(255, 255, 255, 0.1)"
-            }}>
-                <p>
-                    © 2025 SleepSync. All rights reserved.
-                </p>
-            </footer>
+                {/* Main Content */}
+                <div className="main-content">
+                    {/* Welcome Section */}
+                    <div className="welcome-section">
+                        <div className="welcome-card">
+                            <h1 className="welcome-title">Welcome to SleepSync Dashboard</h1>
+                            <p className="welcome-subtitle">Your journey to better sleep starts here. Track and improve your sleep patterns.</p>
+                        </div>
+                    </div>
+
+                    {/* Statistics Section */}
+                    <div className="stats-section">
+                        <div className="stat-card">
+                            <div className="stat-icon stat-icon-blue">😴</div>
+                            <div>
+                                <div className="stat-value-container">
+                                    <h3 className="stat-value">7.5</h3>
+                                    <span className="stat-unit">Hours</span>
+                                </div>
+                                <p className="stat-label">Average Sleep Time</p>
+                            </div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-icon stat-icon-red">🌙</div>
+                            <div>
+                                <div className="stat-value-container">
+                                    <h3 className="stat-value">23:30</h3>
+                                    <span className="stat-unit">PM</span>
+                                </div>
+                                <p className="stat-label">Average Bedtime</p>
+                            </div>
+                        </div>
+
+                        <div className="stat-card">
+                            <div className="stat-icon stat-icon-green">🌞</div>
+                            <div>
+                                <div className="stat-value-container">
+                                    <h3 className="stat-value">7:00</h3>
+                                    <span className="stat-unit">AM</span>
+                                </div>
+                                <p className="stat-label">Average Wake Up</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Features Section */}
+                    <div className="features-section">
+                        {/* Sleep Schedule Card */}
+                        <div className="feature-card">
+                            <div className="feature-header">
+                                <h3 className="feature-title">Sleep Schedule</h3>
+                                <button
+                                    onClick={openModal}
+                                    className="feature-link"
+                                >
+                                    View All →
+                                </button>
+                            </div>
+                            <div className="feature-content feature-schedule">
+                                <div>
+                                    <div className="schedule-date">Tonight</div>
+                                    <div className="schedule-time">23:00 - 7:00</div>
+                                </div>
+                                <button
+                                    onClick={() => handleNavigate("/user/sleep-schedule")}
+                                    className="edit-button"
+                                >
+                                    Edit
+                                </button>
+                            </div>
+                            <button
+                                onClick={() => handleNavigate("/user/sleep-schedule")}
+                                className="action-button blue-button"
+                            >
+                                Manage Schedule
+                            </button>
+                        </div>
+
+                        {/* Record Sleep Card */}
+                        <div className="feature-card">
+                            <div className="feature-header">
+                                <h3 className="feature-title">Record Sleep</h3>
+                                <button
+                                    onClick={() => handleNavigate("/user/record-sleep")}
+                                    className="feature-link"
+                                >
+                                    View History →
+                                </button>
+                            </div>
+                            <div className="feature-content record-sleep-content">
+                                <div className="record-sleep-icon">🛌</div>
+                                <div className="record-sleep-text">Record your sleep time and quality</div>
+                            </div>
+                            <button
+                                onClick={() => handleNavigate("/user/record-sleep")}
+                                className="action-button red-button"
+                            >
+                                Record Sleep
+                            </button>
+                        </div>
+
+                        {/* Sleep Progress Card */}
+                        <div className="feature-card">
+                            <div className="feature-header">
+                                <h3 className="feature-title">Sleep Progress</h3>
+                                <button
+                                    onClick={() => handleNavigate("/user/sleep-progress")}
+                                    className="feature-link"
+                                >
+                                    Full Report →
+                                </button>
+                            </div>
+                            <div className="feature-content">
+                                <div className="progress-container">
+                                    <div className="progress-header">
+                                        <span className="progress-label">Weekly Goal</span>
+                                        <span className="progress-value">5/7 days</span>
+                                    </div>
+                                    <div className="progress-bar-container">
+                                        <div className="progress-bar" style={{ width: '71%' }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => handleNavigate("/user/sleep-progress")}
+                                className="action-button green-button"
+                            >
+                                View Progress
+                            </button>
+                        </div>
+
+                        {/* Sleep Tips Card */}
+                        <div className="feature-card">
+                            <div className="feature-header">
+                                <h3 className="feature-title">Sleep Tips</h3>
+                                <button
+                                    onClick={() => handleNavigate("/sleep-tips")}
+                                    className="feature-link"
+                                >
+                                    More Tips →
+                                </button>
+                            </div>
+                            <div className="feature-content">
+                                <div className="tip-item">
+                                    <span className="tip-icon">💡</span>
+                                    Avoid caffeine at least 6 hours before bedtime
+                                </div>
+                                <div className="tip-item">
+                                    <span className="tip-icon">💡</span>
+                                    Keep your bedroom cool, between 60-67°F
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => handleNavigate("/sleep-tips")}
+                                className="action-button yellow-button"
+                            >
+                                Explore Tips
+                            </button>
+                        </div>
+                    </div>
+                    
+                    {/* Modal for Sleep Records */}
+                    {isModalOpen && (
+                        <div className="modal">
+                            <div className="modal-overlay" onClick={closeModal}></div>
+                            <div className="modal-content">
+                                <button className="modal-close-btn" onClick={closeModal}>✖</button>
+                                <h2 className="modal-title">All Sleep Records</h2>
+                                <ul className="sleep-records-list">
+                                    <li className="sleep-record-item">
+                                        <span className="record-time">23:00 - 7:00</span>
+                                        <span className="record-quality good">Good</span>
+                                    </li>
+                                    <li className="sleep-record-item">
+                                        <span className="record-time">22:30 - 6:30</span>
+                                        <span className="record-quality fair">Fair</span>
+                                    </li>
+                                    <li className="sleep-record-item">
+                                        <span className="record-time">00:00 - 8:00</span>
+                                        <span className="record-quality excellent">Excellent</span>
+                                    </li>
+                                    {/* Add more records dynamically */}
+                                </ul>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <footer className="footer">
+                        <p className="footer-text">
+                            © 2025 SleepSync. All rights reserved.
+                        </p>
+                    </footer>
+                </div>
+            </section>
         </div>
     );
 };
