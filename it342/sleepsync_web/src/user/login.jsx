@@ -10,7 +10,7 @@ const Login = () => {
     const handleLogin = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch(`http://localhost:8080/users/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`, {
+            const response = await fetch(`https://sleepsync-app-latest.onrender.com/users/login?email=${encodeURIComponent(email)}&password=${encodeURIComponent(password)}`, {
                 method: "GET",
             });
 

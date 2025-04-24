@@ -18,7 +18,7 @@ const UserSleepSchedule = () => {
     const fetchSleepSchedule = useCallback(async (userId) => {
         console.log("Fetching sleep schedule for userId:", userId); // Log userId before API call
         try {
-            const response = await fetch(`http://localhost:8080/api/sleep-schedules/user/${userId}`);
+            const response = await fetch(`https://sleepsync-app-latest.onrender.com/api/sleep-schedules/user/${userId}`);
             if (response.ok) {
                 const data = await response.json();
                 console.log("Fetched sleep schedule data:", data); // Log fetched data for verification
@@ -61,7 +61,7 @@ const UserSleepSchedule = () => {
             preferredWakeTime: "06:30",
         };
         try {
-            const response = await fetch(`http://localhost:8080/api/sleep-schedules/user/${userId}`, {
+            const response = await fetch(`https://sleepsync-app-latest.onrender.com/api/sleep-schedules/user/${userId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(defaultSchedule),

@@ -58,7 +58,7 @@ const UserSleepProgress = () => {
         const fetchYears = async () => {
             if (!userId) return;
             try {
-                const res = await fetch(`http://localhost:8080/sleep-tracks/user/${userId}/years`);
+                const res = await fetch(`https://sleepsync-app-latest.onrender.com/sleep-tracks/user/${userId}/years`);
                 if (res.ok) setYears(await res.json());
                 else console.error("Failed to fetch years:", await res.text());
             } catch (err) {
@@ -73,7 +73,7 @@ const UserSleepProgress = () => {
         const fetchSleepData = async () => {
             if (!userId) return;
             try {
-                const res = await fetch(`http://localhost:8080/sleep-tracks/user/${userId}?year=${selectedYear}&month=${selectedMonth + 1}`);
+                const res = await fetch(`https://sleepsync-app-latest.onrender.com/sleep-tracks/user/${userId}?year=${selectedYear}&month=${selectedMonth + 1}`);
                 if (res.ok) setSleepData(await res.json());
                 else console.error("Failed to fetch sleep data:", await res.text());
             } catch (err) {

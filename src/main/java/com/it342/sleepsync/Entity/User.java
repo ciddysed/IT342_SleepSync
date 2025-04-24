@@ -13,8 +13,10 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "\"user\"") // Escaping the table name to avoid conflict with PostgreSQL reserved keywords
 @JsonInclude(JsonInclude.Include.NON_NULL) // Include only non-null fields in JSON
 public class User {
     @Id

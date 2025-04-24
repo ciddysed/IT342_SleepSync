@@ -7,7 +7,7 @@ export const recordSleepTime = async ({ sleepDate, wakeDate, sleepTime, wakeTime
     const sleepTrackData = { sleep_time: sleepTime, wake_time: wakeTime, date: sleepDate, wake_date: wakeDate, sleep_duration: duration };
 
     try {
-        const response = await fetch(`http://localhost:8080/sleep-tracks/record_sleep_time/${userId}`, {
+        const response = await fetch(`https://sleepsync-app-latest.onrender.com/sleep-tracks/record_sleep_time/${userId}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(sleepTrackData),
@@ -31,7 +31,7 @@ export const recordSleepTime = async ({ sleepDate, wakeDate, sleepTime, wakeTime
 
 export const fetchSleepRecords = async (userId) => {
     try {
-        const response = await fetch(`http://localhost:8080/sleep-tracks/${userId}`);
+        const response = await fetch(`https://sleepsync-app-latest.onrender.com/sleep-tracks/${userId}`);
         if (response.ok) {
             const data = await response.json();
             return { success: true, records: data };
@@ -46,7 +46,7 @@ export const fetchSleepRecords = async (userId) => {
 
 export const deleteSleepRecord = async (recordId) => {
     try {
-        const response = await fetch(`http://localhost:8080/sleep-tracks/${recordId}`, { method: "DELETE" });
+        const response = await fetch(`https://sleepsync-app-latest.onrender.com/sleep-tracks/${recordId}`, { method: "DELETE" });
         if (response.ok) {
             return { success: true };
         } else {
