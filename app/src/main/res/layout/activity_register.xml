@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/gradient_bg"
+    android:padding="20dp">
+
+
+    <ImageView
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:src="@drawable/sleep_icon"
+        android:contentDescription="@string/sleepsync_logo"
+        android:layout_marginBottom="16dp"/>
+
+    <!-- App Logo -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/sleepsync2"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:layout_gravity="center" />
+
+    <!-- Register Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/register"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="10dp"
+        android:layout_gravity="center"/>
+
+    <!-- Username Input -->
+    <EditText
+        android:id="@+id/editTextUsername"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/username"
+        android:textColor="@android:color/black"
+        android:padding="10dp"
+        android:background="@android:color/white"
+        android:layout_marginTop="15dp"/>
+
+    <!-- Email Input -->
+    <EditText
+        android:id="@+id/editTextEmail"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/email2"
+        android:textColor="@android:color/black"
+        android:padding="10dp"
+        android:background="@android:color/white"
+        android:layout_marginTop="10dp"/>
+
+    <!-- Password Input -->
+    <EditText
+        android:id="@+id/editTextPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/password2"
+        android:textColor="@android:color/black"
+        android:padding="10dp"
+        android:background="@android:color/white"
+        android:inputType="textPassword"
+        android:layout_marginTop="10dp"/>
+
+    <!-- Register Button -->
+    <Button
+        android:id="@+id/registerButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/register2"
+        android:textStyle="bold"
+        android:backgroundTint="@android:color/black"
+        android:textColor="@android:color/white"
+        android:padding="10dp"
+        android:layout_marginTop="15dp"/>
+
+    <!-- Cancel Button (Go back to login) -->
+    <Button
+        android:id="@+id/cancelButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/cancel"
+        android:textStyle="bold"
+        android:backgroundTint="@android:color/white"
+        android:textColor="@android:color/black"
+        android:padding="10dp"
+        android:layout_marginTop="10dp"/>
+
+</LinearLayout>

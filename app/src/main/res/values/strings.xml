@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SleepSync Mobile</string>
+    <string name="sleepsync_mobile">SleepSync Mobile</string>
     <string name="hello_sleepsync">Hello, SleepSync!</string>
     <string name="click_me">Click Me</string>
     <string name="sleepsync_logo">SleepSync Logo</string>
@@ -16,4 +16,18 @@
     <string name="remember_me">Remember Me?</string>
     <string name="forgot_password2">Forgot Password?</string>
     <string name="remember_me2">Remember Me?</string>
+    <string name="register">REGISTER</string>
+    <string name="username">Username</string>
+    <string name="email2">Email</string>
+    <string name="password2">Password</string>
+    <string name="sleepsync2">SLEEPSYNC</string>
+    <string name="register2">REGISTER</string>
+    <string name="cancel">CANCEL</string>
+    <string name="logout">Logout</string>
+    <string name="menu">Menu</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="back_button" />
+    <string name="delete_record" />
+
 </resources>

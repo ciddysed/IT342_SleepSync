@@ -1,31 +1,88 @@
 package com.example.sleepsyncmobile
 
+import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
-import android.widget.Button
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalContext
+import com.example.sleepsyncmobile.model.LoginResponse
+import com.example.sleepsyncmobile.network.RetrofitClient
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import androidx.core.content.edit
 
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : ComponentActivity() {
+    @SuppressLint("UseKtx")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_login)
+        setContent {
+            MaterialTheme {
+                val context = LocalContext.current
+                var email by remember { mutableStateOf("") }
+                var password by remember { mutableStateOf("") }
 
-        val loginButton: Button = findViewById(R.id.loginButton)
-        val registerText: TextView = findViewById(R.id.registerHere)
-        val forgotPasswordText: TextView = findViewById(R.id.forgotPassword)
+                LoginScreenUI(
+                    email = email,
+                    password = password,
+                    onEmailChange = { email = it },
+                    onPasswordChange = { password = it },
+                    onLoginClick = {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            try {
+                                val response = RetrofitClient.apiService.loginUser(email, password)
+                                withContext(Dispatchers.Main) {
+                                    if (response.isSuccessful && response.body() != null) {
+                                        val loginResponse = response.body() // This is LoginResponse
+                                        val firstName = loginResponse?.user?.firstName // Access firstName
+                                        val emailFromResponse = loginResponse?.user?.email // Access email
 
-        loginButton.setOnClickListener {
-            // TODO: Add login authentication logic
-        }
+                                        if (firstName != null && emailFromResponse != null) {
+                                            Toast.makeText(context, "Login successful!", Toast.LENGTH_SHORT).show()
 
-        registerText.setOnClickListener {
-            val intent = Intent(this, RegisterActivity::class.java)
-            startActivity(intent)
-        }
+                                            // Save first name and email in SharedPreferences
+                                            val sharedPreferences: SharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE)
+                                            val editor = sharedPreferences.edit()
+                                            editor.putString("first_name", firstName)
+                                            editor.putString("email", emailFromResponse)
+                                            editor.apply()
 
-        forgotPasswordText.setOnClickListener {
-            // TODO: Handle forgot password logic
+                                            // Pass the first name and email to HomeActivity
+                                            val intent = Intent(context, HomeActivity::class.java)
+                                            context.startActivity(intent)
+
+                                            // Finish LoginActivity to prevent back navigation
+                                            (context as? LoginActivity)?.finish()
+                                        } else {
+                                            Toast.makeText(context, "Error: First name or email not found", Toast.LENGTH_SHORT).show()
+                                        }
+                                    } else {
+                                        Toast.makeText(context, "Invalid credentials", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Error: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
+                                }
+                            }
+                        }
+                    },
+                    onRegisterClick = {
+                        val intent = Intent(context, RegisterActivity::class.java)
+                        context.startActivity(intent)
+                    },
+                    onForgotPasswordClick = {
+                        val intent = Intent(context, ForgotPasswordActivity::class.java)
+                        context.startActivity(intent)
+                    }
+                )
+            }
         }
     }
 }

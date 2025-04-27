@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_dashboard"
+        android:icon="@drawable/ic_dashboard"
+        android:title="Dashboard" />
+    <item
+        android:id="@+id/nav_sleep_schedule"
+        android:icon="@drawable/ic_schedule"
+        android:title="Schedule" />
+    <item
+        android:id="@+id/nav_record_sleep"
+        android:icon="@drawable/ic_record"
+        android:title="Record" />
+    <item
+        android:id="@+id/nav_sleep_progress"
+        android:icon="@drawable/ic_progress"
+        android:title="Progress" />
+</menu>
