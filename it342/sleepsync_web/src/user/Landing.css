@@ -401,7 +401,162 @@
   }
   
   .tip-item {
-    display: none;
+    color: #D1D5DB;
+    font-size: 0.9rem;
+    margin: 0 0 0.75rem 0;
+  }
+  
+  .tip-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  .tip-icon {
+    color: #ffc107;
+    margin-right: 0.5rem;
+  }
+  
+  .action-button {
+    border: none;
+    border-radius: 8px;
+    padding: 0.75rem;
+    width: 100%;
+    margin-top: 1rem;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  
+  .blue-button {
+    background-color: #0d6efd;
+    color: white;
+  }
+  
+  .red-button {
+    background-color: #dc3545;
+    color: white;
+  }
+  
+  .green-button {
+    background-color: #198754;
+    color: white;
+  }
+  
+  .yellow-button {
+    background-color: #ffc107;
+    color: #252636;
+    font-weight: bold;
+  }
+  
+  /* Footer */
+  .footer {
+    text-align: center;
+    padding: 1.5rem 0;
+    color: #9CA3AF;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    margin-top: 2rem;
+  }
+  
+  .footer-text {
+    margin: 0;
+    font-size: 0.85rem;
+  }
+  
+  /* Modal Styles */
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  
+  .modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+  
+  .modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .modal-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #555;
+  }
+  
+  .modal-title {
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 15px;
+    color: #cfb7b7;
+    text-align: center;
+  }
+  
+  .sleep-records-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    
+  }
+  
+  .sleep-record-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+    border-bottom: 1px solid #eee;
+    font-size: 16px;
+    color: #555;
+  }
+  
+  .sleep-record-item:last-child {
+    border-bottom: none;
+  }
+  
+  .record-time {
+    font-weight: bold;
+    color: #cfb7b7;
+  }
+  
+  .record-quality {
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+    text-transform: capitalize;
+  }
+  
+  .record-quality.good {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  
+  .record-quality.fair {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+  
+  .record-quality.excellent {
+    background-color: #cce5ff;
+    color: #004085;
   }
   
   @keyframes fadeIn {
@@ -536,6 +691,49 @@
   padding: 0.5rem 0.75rem;
   font-size: 0.8rem;
   cursor: pointer;
+}
+
+/* Smart Wake Up Styles */
+.smart-wake-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.smart-wake-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+  color: #ffc107;
+}
+
+.smart-wake-text {
+  color: #D1D5DB;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.setting-item:last-child {
+  border-bottom: none;
+}
+
+.setting-label {
+  color: #9CA3AF;
+  font-size: 0.9rem;
+}
+
+.setting-value {
+  color: #E5E7EB;
+  font-size: 0.9rem;
+  font-weight: 500;
 }
 
 /* Form Styles */

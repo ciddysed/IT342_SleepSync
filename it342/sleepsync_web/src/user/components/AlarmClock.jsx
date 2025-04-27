@@ -529,7 +529,7 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
     // Test sound functionality
     const testSound = () => {
         try {
-            const testAudio = new Audio(alarmSounds.find(s => s.id === 'nokia-6280').url); // Default to 'nokia-6280'
+            const testAudio = new Audio(getCurrentSoundUrl());
             testAudio.volume = volume / 100;
 
             // Ensure the audio file is loaded before playing
@@ -764,38 +764,14 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
                             <div className="ringing-icon">
                                 <Volume2 size={48} className="pulsating" />
                             </div>
-                            <h2>{activeAlarm.label}</h2>
-                            <p className="alarm-time-large">{activeAlarm.time}</p>
-                            
+                            <h2 style={{ color: '#333' }}>{activeAlarm.label}</h2>
+                            <p className="alarm-time-large" style={{ color: '#333' }}>{activeAlarm.time}</p>
                             {activeAlarm.sound && (
-                                <p className="alarm-sound-info">
+                                <p className="alarm-sound-info" style={{ color: '#333' }}>
                                     <Music size={16} />
                                     {alarmSounds.find(s => s.id === activeAlarm.sound)?.name || 'Default Sound'}
                                 </p>
                             )}
-                            
-                            {/* Sound control panel */}
-                            <div className="alarm-sound-controls">
-                                <div className="volume-control">
-                                    <label>Volume:</label>
-                                    <input
-                                        type="range"
-                                        min="0"
-                                        max="100"
-                                        value={volume}
-                                        onChange={(e) => setVolume(parseInt(e.target.value))}
-                                    />
-                                </div>
-                                
-                                {/* Add direct sound button for user interaction */}
-                                <button 
-                                    onClick={forcePlaySound}
-                                    className="play-sound-btn"
-                                    type="button"
-                                >
-                                    Play Alarm Sound
-                                </button>
-                            </div>
                         </div>
                         <div className="alarm-modal-actions">
                             <button onClick={snoozeAlarm} className="snooze-btn" type="button">
