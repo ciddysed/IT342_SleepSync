@@ -33,6 +33,7 @@ const RecordSleep = () => {
     const [showInsights, setShowInsights] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [tasksCompleted, setTasksCompleted] = useState(false);
 
     const sleepChartRef = useRef(null);
     const sleepLineChartRef = useRef(null);
@@ -70,6 +71,7 @@ const RecordSleep = () => {
         event.preventDefault();
         setIsLoading(true);
         setErrorMessage('');
+        setTasksCompleted(false); // Reset tasks completed state when submitting form
         const userId = localStorage.getItem("userId");
         if (!userId) {
             setErrorMessage("User not logged in. Please log in to record sleep.");
@@ -110,12 +112,16 @@ const RecordSleep = () => {
     const handleDoneButtonClick = () => {
         const allChecked = Array.from(document.querySelectorAll('.task-card input[type="checkbox"]')).every(cb => cb.checked);
         if (allChecked) {
+            // Set tasksCompleted to true when all tasks are done
+            setTasksCompleted(true);
+            
             setShowFireworks(true);
             setTimeout(() => {
                 setShowFireworks(false);
                 setTaskCards('');
                 setShowDoneButton(false);
                 setShowInsights(false);
+                // Don't reset tasksCompleted here so the alarm stays set
             }, 3000);
         } else {
             setErrorMessage("Please complete all tasks before proceeding.");
@@ -286,7 +292,7 @@ const RecordSleep = () => {
                         {isLoading && <div className="loading-spinner"><p>Processing your sleep data...</p></div>}
                         {showInsights && sleepDuration !== null && <SleepInsights duration={sleepDuration} getSleepCategory={getSleepCategory} />}
                         {taskCards && <TaskCards taskCards={taskCards} handleDoneButtonClick={handleDoneButtonClick} />}
-                        <AlarmClock wakeTime={wakeTime} wakeDate={wakeDate} />
+                        <AlarmClock wakeTime={wakeTime} wakeDate={wakeDate} tasksCompleted={tasksCompleted} />
                     </div>
                 </div>
 
