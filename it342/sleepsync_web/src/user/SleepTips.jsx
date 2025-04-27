@@ -237,15 +237,7 @@ const SleepTips = () => {
               onClick={() => handleNavigate("/user/landing")}
               className="sidebar-menu-button"
             >
-              <i className="sidebar-menu-icon">🏠</i> Dashboard
-            </button>
-          </li>
-          <li className="sidebar-menu-item">
-            <button
-              onClick={() => handleNavigate("/user/sleep-schedule")}
-              className="sidebar-menu-button"
-            >
-              <i className="sidebar-menu-icon">📅</i> Sleep Schedule
+              <i className="sidebar-menu-icon">🏠</i> Home
             </button>
           </li>
           <li className="sidebar-menu-item">
@@ -262,6 +254,14 @@ const SleepTips = () => {
               className="sidebar-menu-button"
             >
               <i className="sidebar-menu-icon">📊</i> Sleep Progress
+            </button>
+          </li>
+          <li className="sidebar-menu-item">
+            <button
+              onClick={() => handleNavigate("/user/smart-alarm")}
+              className="sidebar-menu-button"
+            >
+              <i className="sidebar-menu-icon">⏰</i> Alarm
             </button>
           </li>
           <li className="sidebar-menu-item active">

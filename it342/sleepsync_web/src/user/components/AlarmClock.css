@@ -311,3 +311,165 @@
 .stop-btn:hover {
     background-color: #5a3e61;
 }
+
+/* Corrected invalid CSS rule */
+.padding-fix {
+    padding: 5px 10px;
+    font-size: 14px;
+}
+
+.toggle-advanced-btn:hover {
+    background-color: #f0f0f0;
+    border-radius: 5px;
+}
+
+.rotate-180 {
+    transform: rotate(180deg);
+    transition: transform 0.3s ease;
+}
+
+.advanced-settings {
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+    border: 1px solid #eee;
+}
+
+.sound-selector, .duration-selector {
+    width: 70%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+    margin-right: 10px;
+}
+
+.preview-sound-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background-color: #e9e3ee;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.preview-sound-btn:hover {
+    background-color: #d9d3de;
+}
+
+.edit-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    color: #6b4e71;
+    transition: background-color 0.3s;
+}
+
+.edit-btn:hover {
+    background-color: #e9e3ee;
+}
+
+.alarm-sound {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: #777;
+    font-size: 0.8em;
+    margin-top: 5px;
+}
+
+.alarm-sound-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    color: #777;
+    margin: 5px 0 15px;
+}
+
+.alarm-sound-controls {
+    background-color: #f8f8f8;
+    border-radius: 8px;
+    padding: 15px;
+    margin: 15px 0;
+}
+
+.volume-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.volume-control label {
+    min-width: 60px;
+    color: #555;
+}
+
+.play-sound-btn {
+    background-color: #6b4e71;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    margin-top: 5px;
+    width: 100%;
+}
+
+.play-sound-btn:hover {
+    background-color: #5a3e61;
+}
+
+.test-sound-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background-color: #e9e3ee;
+    color: #555;
+    border: none;
+    border-radius: 5px;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.test-sound-btn:hover {
+    background-color: #d9d3de;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .alarm-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .alarm-actions {
+        margin-top: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .alarm-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .alarm-controls {
+        margin-top: 15px;
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .alarm-modal-content {
+        max-width: 90%;
+        padding: 20px;
+    }
+}

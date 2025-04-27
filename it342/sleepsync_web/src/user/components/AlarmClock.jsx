@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { BellRing, BellOff, Clock, Volume2, Calendar } from 'lucide-react';
+import { BellRing, BellOff, Clock, Volume2, Calendar, Edit, Settings, ChevronDown, Music } from 'lucide-react';
 import './AlarmClock.css';
 
 const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
@@ -8,59 +8,60 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
         return savedAlarms ? JSON.parse(savedAlarms) : [];
     });
     const [showForm, setShowForm] = useState(false);
+    const [editMode, setEditMode] = useState(false);
+    const [editingAlarmId, setEditingAlarmId] = useState(null);
     const [newAlarmTime, setNewAlarmTime] = useState(wakeTime || '07:00');
     const [newAlarmDate, setNewAlarmDate] = useState(wakeDate || new Date().toISOString().split('T')[0]);
     const [alarmLabel, setAlarmLabel] = useState('Wake Up');
     const [repeatDays, setRepeatDays] = useState([]);
     const [volume, setVolume] = useState(80);
+    const [alarmDuration, setAlarmDuration] = useState(5); // Duration in minutes
+    const [selectedSound, setSelectedSound] = useState('alarm-clock');
     const [activeAlarm, setActiveAlarm] = useState(null);
     const [isSnoozing, setIsSnoozing] = useState(false);
+    const [showAdvancedSettings, setShowAdvancedSettings] = useState(false);
     
     // References
     const audioRef = useRef(null);
-    const audioContextRef = useRef(null);
-    const oscillatorRef = useRef(null);
-    const gainNodeRef = useRef(null);
     const alarmCheckIntervalRef = useRef(null);
+    const alarmDurationTimeoutRef = useRef(null);
     const prevTasksCompletedRef = useRef(false);
 
     // Days of the week for repeat functionality
     const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    
+    // Available alarm sounds
+    const alarmSounds = [
+        { id: 'iphone-radar', name: 'iPhone Radar', url: '/assets/sounds/iPhone Radar AlarmRingtone Apple Sound Sound Effect for Editing.mp3' }, 
+        { id: 'nokia-6280', name: 'Nokia 6280 Ringtone Sound Effect', url: '/assets/sounds/Nokia 6280 Ringtone Sound Effect.mp3' },
+        { id: 'classic-alarm', name: 'Classic Alarm', url: '/assets/sounds/Classic Alarm Sound.mp3' },
+        { id: 'digital-beep', name: 'Digital Beep', url: '/assets/sounds/Digital Beep Alarm.mp3' },
+        { id: 'danger-alarm', name: 'Danger Alarm', url: '/assets/sounds/Danger Alarm Sound Effect.mp3' }
+    ];
 
-    // Initialize audio systems - both HTML5 Audio and Web Audio API for fallback
+    // Get current alarm sound URL
+    const getCurrentSoundUrl = useCallback(() => {
+        const sound = alarmSounds.find(s => s.id === selectedSound);
+        return sound ? sound.url : alarmSounds[0].url;
+    }, [selectedSound]);
+
+    // Initialize audio
     const initializeAudio = useCallback(() => {
         try {
-            // Standard HTML5 Audio
-            audioRef.current = new Audio('/Danger Alarm Sound Effect.mp3');
+            // Create new Audio object with the selected alarm sound
+            audioRef.current = new Audio(getCurrentSoundUrl());
             audioRef.current.loop = true;
             audioRef.current.volume = volume / 100;
             audioRef.current.preload = "auto";
             
-            // Initialize Web Audio API as fallback
-            window.AudioContext = window.AudioContext || window.webkitAudioContext;
-            audioContextRef.current = new AudioContext();
+            // Force preload of the audio file
+            audioRef.current.load();
             
-            // Create oscillator for fallback beep
-            oscillatorRef.current = audioContextRef.current.createOscillator();
-            oscillatorRef.current.type = 'triangle';
-            oscillatorRef.current.frequency.setValueAtTime(440, audioContextRef.current.currentTime);
-            
-            // Create gain node for volume control
-            gainNodeRef.current = audioContextRef.current.createGain();
-            gainNodeRef.current.gain.setValueAtTime(0, audioContextRef.current.currentTime);
-            
-            // Connect the nodes
-            oscillatorRef.current.connect(gainNodeRef.current);
-            gainNodeRef.current.connect(audioContextRef.current.destination);
-            
-            // Start the oscillator (it will be silent until gain is increased)
-            oscillatorRef.current.start();
-            
-            console.log("Audio systems initialized successfully");
+            console.log("Audio system initialized successfully with selected alarm sound");
         } catch (error) {
-            console.error("Error initializing audio systems:", error);
+            console.error("Error initializing audio system:", error);
         }
-    }, [volume]);
+    }, [volume, getCurrentSoundUrl]);
 
     // Check alarms function with improved logging
     const checkAlarms = useCallback(() => {
@@ -92,11 +93,18 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
         });
     }, [alarms]);
 
-    // Play sound using multiple methods to ensure it works
+    // Play sound with better error handling and fallback options
     const playSound = useCallback(() => {
         console.log("Attempting to play alarm sound");
         
         if (audioRef.current) {
+            // Need to update the audio source if the selected sound has changed
+            if (audioRef.current.src !== getCurrentSoundUrl()) {
+                audioRef.current.src = getCurrentSoundUrl();
+                audioRef.current.load();
+            }
+            
+            // Reset the audio to the beginning
             audioRef.current.currentTime = 0;
             audioRef.current.volume = volume / 100;
             
@@ -106,14 +114,82 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
                 playPromise
                     .then(() => {
                         console.log("Alarm sound playing successfully");
+                        
+                        // Set a timeout to automatically stop the alarm after the specified duration
+                        if (alarmDurationTimeoutRef.current) {
+                            clearTimeout(alarmDurationTimeoutRef.current);
+                        }
+                        
+                        const durationMs = alarmDuration * 60 * 1000;
+                        alarmDurationTimeoutRef.current = setTimeout(() => {
+                            console.log(`Auto-stopping alarm after ${alarmDuration} minutes`);
+                            stopAlarm();
+                        }, durationMs);
                     })
                     .catch(error => {
                         console.error("Error playing alarm sound:", error);
-                        alert("Alarm triggered! But sound couldn't be played.");
+                        
+                        // Try with a different approach on error
+                        console.log("Trying alternative alarm sound method...");
+                        
+                        // Create a temporary audio element to try a different approach
+                        const tempAudio = new Audio(getCurrentSoundUrl());
+                        tempAudio.volume = volume / 100;
+                        
+                        // Try to play with user interaction simulation
+                        tempAudio.play()
+                            .then(() => {
+                                console.log("Alternative alarm sound playing successfully");
+                                // Replace original audio with this working one
+                                audioRef.current = tempAudio;
+                                
+                                // Set auto-stop timeout
+                                if (alarmDurationTimeoutRef.current) {
+                                    clearTimeout(alarmDurationTimeoutRef.current);
+                                }
+                                
+                                const durationMs = alarmDuration * 60 * 1000;
+                                alarmDurationTimeoutRef.current = setTimeout(() => {
+                                    console.log(`Auto-stopping alarm after ${alarmDuration} minutes`);
+                                    stopAlarm();
+                                }, durationMs);
+                            })
+                            .catch(err => {
+                                console.error("Alternative method also failed:", err);
+                                alert("Alarm triggered! But sound couldn't be played. Click the 'Play Alarm Sound' button to hear it.");
+                            });
                     });
             }
+        } else {
+            // If audioRef is not initialized, try to create and play directly
+            try {
+                const tempAudio = new Audio(getCurrentSoundUrl());
+                tempAudio.volume = volume / 100;
+                tempAudio.play()
+                    .then(() => {
+                        audioRef.current = tempAudio;
+                        console.log("Direct play alarm sound successful");
+                        
+                        // Set auto-stop timeout
+                        if (alarmDurationTimeoutRef.current) {
+                            clearTimeout(alarmDurationTimeoutRef.current);
+                        }
+                        
+                        const durationMs = alarmDuration * 60 * 1000;
+                        alarmDurationTimeoutRef.current = setTimeout(() => {
+                            console.log(`Auto-stopping alarm after ${alarmDuration} minutes`);
+                            stopAlarm();
+                        }, durationMs);
+                    })
+                    .catch(err => {
+                        console.error("Direct play failed:", err);
+                        alert("Alarm triggered! Click the 'Play Alarm Sound' button to hear it.");
+                    });
+            } catch (e) {
+                console.error("Critical audio error:", e);
+            }
         }
-    }, [volume]);
+    }, [volume, alarmDuration, getCurrentSoundUrl]);
 
     // Trigger alarm with enhanced error handling
     const triggerAlarm = useCallback((alarm) => {
@@ -124,7 +200,22 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
         
         // Set the active alarm and play sound
         setActiveAlarm(alarm);
-        playSound();
+        
+        // Use the alarm's specific sound and volume if available
+        if (alarm.sound) {
+            setSelectedSound(alarm.sound);
+        }
+        
+        if (alarm.volume !== undefined) {
+            setVolume(alarm.volume);
+        }
+        
+        if (alarm.duration) {
+            setAlarmDuration(alarm.duration);
+        }
+        
+        // Play sound after setting the alarm specific settings
+        setTimeout(() => playSound(), 50);
         
         // Show notification if available
         if ('Notification' in window && Notification.permission === 'granted') {
@@ -134,6 +225,35 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
             });
         }
     }, [playSound]);
+
+    // Set up form for creating a new alarm or editing an existing one
+    const setupForm = useCallback((alarm = null) => {
+        if (alarm) {
+            // We're editing an existing alarm
+            setEditMode(true);
+            setEditingAlarmId(alarm.id);
+            setNewAlarmTime(alarm.time);
+            setNewAlarmDate(alarm.date);
+            setAlarmLabel(alarm.label);
+            setRepeatDays(alarm.repeatDays || []);
+            setVolume(alarm.volume !== undefined ? alarm.volume : 80);
+            setAlarmDuration(alarm.duration || 5);
+            setSelectedSound(alarm.sound || 'alarm-clock');
+        } else {
+            // We're creating a new alarm
+            setEditMode(false);
+            setEditingAlarmId(null);
+            setNewAlarmTime(wakeTime || '07:00');
+            setNewAlarmDate(wakeDate || new Date().toISOString().split('T')[0]);
+            setAlarmLabel('Wake Up');
+            setRepeatDays([]);
+            setVolume(80);
+            setAlarmDuration(5);
+            setSelectedSound('alarm-clock');
+        }
+        
+        setShowForm(true);
+    }, [wakeTime, wakeDate]);
 
     // Automatically set an alarm from wake time
     const setAlarmFromWakeTime = useCallback(() => {
@@ -154,6 +274,9 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
                     date: wakeDate,
                     label: 'Based on your sleep schedule',
                     repeatDays: [],
+                    sound: selectedSound,
+                    volume: volume,
+                    duration: alarmDuration,
                     active: true,
                     triggered: false
                 };
@@ -161,7 +284,7 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
                 setAlarms(prevAlarms => [...prevAlarms, newAlarm]);
             }
         }
-    }, [wakeTime, wakeDate, alarms]);
+    }, [wakeTime, wakeDate, alarms, selectedSound, volume, alarmDuration]);
 
     // Component mounting and cleanup
     useEffect(() => {
@@ -178,22 +301,13 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
         return () => {
             clearInterval(alarmCheckIntervalRef.current);
             
+            if (alarmDurationTimeoutRef.current) {
+                clearTimeout(alarmDurationTimeoutRef.current);
+            }
+            
             if (audioRef.current) {
                 audioRef.current.pause();
                 audioRef.current.src = '';
-            }
-            
-            // Clean up Web Audio API resources
-            if (oscillatorRef.current && oscillatorRef.current.stop) {
-                try {
-                    oscillatorRef.current.stop();
-                } catch (e) {
-                    console.log("Oscillator already stopped");
-                }
-            }
-            
-            if (audioContextRef.current && audioContextRef.current.close) {
-                audioContextRef.current.close();
             }
         };
     }, [checkAlarms, initializeAudio]);
@@ -208,14 +322,15 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
         if (audioRef.current) {
             audioRef.current.volume = volume / 100;
         }
-        
-        if (gainNodeRef.current && audioContextRef.current) {
-            gainNodeRef.current.gain.setValueAtTime(
-                activeAlarm ? volume / 100 : 0, 
-                audioContextRef.current.currentTime
-            );
+    }, [volume]);
+
+    // Update audio src when selected sound changes
+    useEffect(() => {
+        if (audioRef.current && audioRef.current.src !== getCurrentSoundUrl()) {
+            audioRef.current.src = getCurrentSoundUrl();
+            audioRef.current.load();
         }
-    }, [volume, activeAlarm]);
+    }, [selectedSound, getCurrentSoundUrl]);
 
     // Auto-set alarm when tasks are completed
     useEffect(() => {
@@ -224,6 +339,17 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
         }
         prevTasksCompletedRef.current = tasksCompleted;
     }, [tasksCompleted, setAlarmFromWakeTime]);
+
+    // Make alarms editable when tasks are completed
+    useEffect(() => {
+        if (tasksCompleted) {
+            // Update alarms to include editable flag
+            setAlarms(prevAlarms => prevAlarms.map(alarm => ({
+                ...alarm,
+                editable: true
+            })));
+        }
+    }, [tasksCompleted]);
 
     // Reset triggered flag at midnight for repeating alarms
     useEffect(() => {
@@ -255,16 +381,14 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
     const stopAlarm = () => {
         console.log("Stopping all alarm sounds");
         
-        // Stop regular audio
         if (audioRef.current) {
             audioRef.current.pause();
             audioRef.current.currentTime = 0;
         }
         
-        // Stop Web Audio API sound
-        if (gainNodeRef.current && audioContextRef.current) {
-            gainNodeRef.current.gain.cancelScheduledValues(audioContextRef.current.currentTime);
-            gainNodeRef.current.gain.linearRampToValueAtTime(0, audioContextRef.current.currentTime + 0.1);
+        if (alarmDurationTimeoutRef.current) {
+            clearTimeout(alarmDurationTimeoutRef.current);
+            alarmDurationTimeoutRef.current = null;
         }
         
         setActiveAlarm(null);
@@ -279,9 +403,10 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
             audioRef.current.currentTime = 0;
         }
         
-        if (gainNodeRef.current && audioContextRef.current) {
-            gainNodeRef.current.gain.cancelScheduledValues(audioContextRef.current.currentTime);
-            gainNodeRef.current.gain.linearRampToValueAtTime(0, audioContextRef.current.currentTime + 0.1);
+        // Clear any auto-stop timeout
+        if (alarmDurationTimeoutRef.current) {
+            clearTimeout(alarmDurationTimeoutRef.current);
+            alarmDurationTimeoutRef.current = null;
         }
         
         setIsSnoozing(true);
@@ -295,26 +420,77 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
         }, 5 * 60 * 1000);
     };
 
-    // Handle add alarm
-    const handleAddAlarm = () => {
-        const newAlarm = {
-            id: Date.now(),
-            time: newAlarmTime,
-            date: newAlarmDate,
-            label: alarmLabel,
-            repeatDays: [...repeatDays],
-            active: true,
-            triggered: false
-        };
+    // Force play alarm sound (for use with direct user interaction)
+    const forcePlaySound = () => {
+        // This function is called directly by user interaction, which should bypass
+        // autoplay restrictions
+        if (audioRef.current) {
+            // Make sure we're using the current selected sound
+            if (audioRef.current.src !== getCurrentSoundUrl()) {
+                audioRef.current.src = getCurrentSoundUrl();
+                audioRef.current.load();
+            }
+            
+            audioRef.current.currentTime = 0;
+            audioRef.current.volume = volume / 100;
+            audioRef.current.play()
+                .then(() => console.log("Force play successful"))
+                .catch(err => console.error("Force play failed:", err));
+        } else {
+            // Create a new audio element on demand
+            const newAudio = new Audio(getCurrentSoundUrl());
+            newAudio.volume = volume / 100;
+            newAudio.play()
+                .then(() => {
+                    audioRef.current = newAudio;
+                    console.log("New audio created and playing");
+                })
+                .catch(err => console.error("New audio play failed:", err));
+        }
+    };
+
+    // Handle add or update alarm
+    const handleSaveAlarm = () => {
+        if (editMode && editingAlarmId) {
+            // Update existing alarm
+            setAlarms(prevAlarms => prevAlarms.map(alarm => 
+                alarm.id === editingAlarmId 
+                    ? {
+                        ...alarm,
+                        time: newAlarmTime,
+                        date: newAlarmDate,
+                        label: alarmLabel,
+                        repeatDays: [...repeatDays],
+                        sound: selectedSound,
+                        volume: volume,
+                        duration: alarmDuration,
+                        triggered: false
+                    } 
+                    : alarm
+            ));
+        } else {
+            // Add new alarm
+            const newAlarm = {
+                id: Date.now(),
+                time: newAlarmTime,
+                date: newAlarmDate,
+                label: alarmLabel,
+                repeatDays: [...repeatDays],
+                sound: selectedSound,
+                volume: volume,
+                duration: alarmDuration,
+                editable: tasksCompleted, // Make editable if tasks are completed
+                active: true,
+                triggered: false
+            };
+            
+            setAlarms(prevAlarms => [...prevAlarms, newAlarm]);
+        }
         
-        setAlarms(prevAlarms => [...prevAlarms, newAlarm]);
         setShowForm(false);
-        
-        // Reset form fields
-        setNewAlarmTime(wakeTime || '07:00');
-        setNewAlarmDate(wakeDate || new Date().toISOString().split('T')[0]);
-        setAlarmLabel('Wake Up');
-        setRepeatDays([]);
+        setEditMode(false);
+        setEditingAlarmId(null);
+        setShowAdvancedSettings(false);
     };
 
     // Toggle alarm active state
@@ -327,6 +503,11 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
     // Delete alarm
     const deleteAlarm = (id) => {
         setAlarms(prevAlarms => prevAlarms.filter(alarm => alarm.id !== id));
+    };
+
+    // Edit alarm
+    const editAlarm = (alarm) => {
+        setupForm(alarm);
     };
 
     // Toggle repeat day
@@ -345,12 +526,40 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
         }
     };
 
+    // Test sound functionality
+    const testSound = () => {
+        try {
+            const testAudio = new Audio(alarmSounds.find(s => s.id === 'nokia-6280').url); // Default to 'nokia-6280'
+            testAudio.volume = volume / 100;
+
+            // Ensure the audio file is loaded before playing
+            testAudio.addEventListener('canplaythrough', () => {
+                testAudio.play()
+                    .then(() => alert("Sound test successful!"))
+                    .catch(err => {
+                        console.error("Sound test failed during playback:", err);
+                        alert("Sound test failed. Check console for details.");
+                    });
+            });
+
+            testAudio.addEventListener('error', (e) => {
+                console.error("Sound test failed to load audio:", e);
+                alert("Sound test failed to load the audio file. Check console for details.");
+            });
+
+            testAudio.load(); // Explicitly load the audio file
+        } catch (e) {
+            console.error("Sound test error:", e);
+            alert("Sound test error: " + e.message);
+        }
+    };
+
     return (
         <div className="alarm-clock-container">
             <div className="alarm-header">
                 <h2>Alarm Clock</h2>
                 <div className="alarm-actions">
-                    <button className="add-alarm-btn" onClick={() => setShowForm(true)}>
+                    <button className="add-alarm-btn" onClick={() => setupForm()}>
                         <BellRing size={20} />
                         Add Alarm
                     </button>
@@ -361,12 +570,16 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
                     <button onClick={requestNotificationPermission} className="notification-btn">
                         Enable Notifications
                     </button>
+                    <button onClick={testSound} className="test-sound-btn">
+                        <Volume2 size={20} />
+                        Test Sound
+                    </button>
                 </div>
             </div>
             
             {showForm && (
                 <div className="alarm-form">
-                    <h3>Add New Alarm</h3>
+                    <h3>{editMode ? 'Edit Alarm' : 'Add New Alarm'}</h3>
                     <div className="form-group">
                         <label>Time:</label>
                         <input
@@ -396,17 +609,6 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
                         />
                     </div>
                     <div className="form-group">
-                        <label>Volume:</label>
-                        <input
-                            type="range"
-                            min="0"
-                            max="100"
-                            value={volume}
-                            onChange={(e) => setVolume(parseInt(e.target.value))}
-                        />
-                        <span>{volume}%</span>
-                    </div>
-                    <div className="form-group">
                         <label>Repeat:</label>
                         <div className="day-selector">
                             {daysOfWeek.map((day, index) => (
@@ -421,9 +623,86 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
                             ))}
                         </div>
                     </div>
+                    
+                    <div className="advanced-settings-toggle">
+                        <button 
+                            className="toggle-advanced-btn"
+                            type="button"
+                            onClick={() => setShowAdvancedSettings(!showAdvancedSettings)}
+                        >
+                            <Settings size={16} />
+                            Advanced Settings
+                            <ChevronDown size={16} className={showAdvancedSettings ? 'rotate-180' : ''} />
+                        </button>
+                    </div>
+                    
+                    {showAdvancedSettings && (
+                        <div className="advanced-settings">
+                            <div className="form-group">
+                                <label>Alarm Sound:</label>
+                                <select 
+                                    value={selectedSound}
+                                    onChange={(e) => setSelectedSound(e.target.value)}
+                                    className="sound-selector"
+                                >
+                                    {alarmSounds.map(sound => (
+                                        <option key={sound.id} value={sound.id}>
+                                            {sound.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <button 
+                                    type="button" 
+                                    onClick={testSound} 
+                                    className="preview-sound-btn"
+                                >
+                                    <Music size={16} />
+                                    Preview
+                                </button>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>Volume:</label>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={volume}
+                                    onChange={(e) => setVolume(parseInt(e.target.value))}
+                                />
+                                <span>{volume}%</span>
+                            </div>
+                            
+                            <div className="form-group">
+                                <label>Auto-Stop After (minutes):</label>
+                                <select 
+                                    value={alarmDuration}
+                                    onChange={(e) => setAlarmDuration(parseInt(e.target.value))}
+                                    className="duration-selector"
+                                >
+                                    <option value="1">1 minute</option>
+                                    <option value="3">3 minutes</option>
+                                    <option value="5">5 minutes</option>
+                                    <option value="10">10 minutes</option>
+                                    <option value="15">15 minutes</option>
+                                    <option value="30">30 minutes</option>
+                                </select>
+                            </div>
+                        </div>
+                    )}
+                    
                     <div className="form-actions">
-                        <button onClick={handleAddAlarm} className="save-btn" type="button">Save Alarm</button>
-                        <button onClick={() => setShowForm(false)} className="cancel-btn" type="button">Cancel</button>
+                        <button onClick={handleSaveAlarm} className="save-btn" type="button">
+                            {editMode ? 'Update Alarm' : 'Save Alarm'}
+                        </button>
+                        <button onClick={() => {
+                            setShowForm(false);
+                            setEditMode(false);
+                            setEditingAlarmId(null);
+                            setShowAdvancedSettings(false);
+                        }} className="cancel-btn" type="button">
+                            Cancel
+                        </button>
                     </div>
                 </div>
             )}
@@ -445,8 +724,23 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
                                     </span>
                                 </div>
                                 <div className="alarm-label">{alarm.label}</div>
+                                {alarm.sound && (
+                                    <div className="alarm-sound">
+                                        <Music size={14} />
+                                        {alarmSounds.find(s => s.id === alarm.sound)?.name || 'Default Sound'}
+                                    </div>
+                                )}
                             </div>
                             <div className="alarm-controls">
+                                {(tasksCompleted || alarm.editable) && (
+                                    <button
+                                        className="edit-btn"
+                                        onClick={() => editAlarm(alarm)}
+                                        type="button"
+                                    >
+                                        <Edit size={20} />
+                                    </button>
+                                )}
                                 <button 
                                     className={`toggle-btn ${alarm.active ? 'active' : ''}`} 
                                     onClick={() => toggleAlarm(alarm.id)}
@@ -473,23 +767,35 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
                             <h2>{activeAlarm.label}</h2>
                             <p className="alarm-time-large">{activeAlarm.time}</p>
                             
-                            {/* Add direct sound button for user interaction */}
-                            <button 
-                                onClick={playSound}
-                                className="play-sound-btn"
-                                style={{
-                                    margin: '15px 0',
-                                    padding: '10px 15px',
-                                    background: '#e74c3c',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '4px',
-                                    fontSize: '16px'
-                                }}
-                                type="button"
-                            >
-                                Play Alarm Sound
-                            </button>
+                            {activeAlarm.sound && (
+                                <p className="alarm-sound-info">
+                                    <Music size={16} />
+                                    {alarmSounds.find(s => s.id === activeAlarm.sound)?.name || 'Default Sound'}
+                                </p>
+                            )}
+                            
+                            {/* Sound control panel */}
+                            <div className="alarm-sound-controls">
+                                <div className="volume-control">
+                                    <label>Volume:</label>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="100"
+                                        value={volume}
+                                        onChange={(e) => setVolume(parseInt(e.target.value))}
+                                    />
+                                </div>
+                                
+                                {/* Add direct sound button for user interaction */}
+                                <button 
+                                    onClick={forcePlaySound}
+                                    className="play-sound-btn"
+                                    type="button"
+                                >
+                                    Play Alarm Sound
+                                </button>
+                            </div>
                         </div>
                         <div className="alarm-modal-actions">
                             <button onClick={snoozeAlarm} className="snooze-btn" type="button">
@@ -502,6 +808,7 @@ const AlarmClock = ({ wakeTime, wakeDate, tasksCompleted }) => {
                     </div>
                 </div>
             )}
+            
         </div>
     );
 };

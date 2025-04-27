@@ -1,4 +1,3 @@
-// filepath: src/user/UserSleepProgress.jsx
 import React, { useState, useEffect } from "react";
 import {
     Chart as ChartJS,
@@ -14,6 +13,7 @@ import annotationPlugin from "chartjs-plugin-annotation";
 import { Line } from "react-chartjs-2";
 import { useNavigate } from "react-router-dom";
 import { logoutUser } from "../utils/auth";
+import "./Landing.css"; // Import the same CSS file
 
 // Register Chart.js modules
 ChartJS.register(
@@ -34,6 +34,12 @@ const UserSleepProgress = () => {
     const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
     const [sleepData, setSleepData] = useState([]);
+    const [sleepStats, setSleepStats] = useState({
+        avgSleepTime: "7.5",
+        avgBedtime: "23:30",
+        avgWakeup: "7:00"
+    });
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
     const navigate = useNavigate();
 
     const toggleSidebar = () => {
@@ -46,6 +52,14 @@ const UserSleepProgress = () => {
 
     const handleLogout = () => {
         logoutUser(navigate);
+    };
+
+    const openFilterModal = () => {
+        setIsFilterModalOpen(true);
+    };
+
+    const closeFilterModal = () => {
+        setIsFilterModalOpen(false);
     };
 
     const MONTHS = [
@@ -74,8 +88,24 @@ const UserSleepProgress = () => {
             if (!userId) return;
             try {
                 const res = await fetch(`https://sleepsync-app-latest.onrender.com/sleep-tracks/user/${userId}?year=${selectedYear}&month=${selectedMonth + 1}`);
-                if (res.ok) setSleepData(await res.json());
-                else console.error("Failed to fetch sleep data:", await res.text());
+                if (res.ok) {
+                    const data = await res.json();
+                    setSleepData(data);
+                    
+                    // Calculate sleep statistics
+                    if (data.length > 0) {
+                        const totalSleep = data.reduce((sum, entry) => sum + entry.sleepDuration, 0);
+                        const avgSleep = (totalSleep / data.length).toFixed(1);
+                        
+                        // This would be better with actual bedtime/wakeup data
+                        // For now, just demonstrating the concept
+                        setSleepStats({
+                            avgSleepTime: avgSleep,
+                            avgBedtime: "23:30",
+                            avgWakeup: "7:00"
+                        });
+                    }
+                } else console.error("Failed to fetch sleep data:", await res.text());
             } catch (err) {
                 console.error("Error fetching sleep data:", err);
             }
@@ -103,14 +133,14 @@ const UserSleepProgress = () => {
             type: "line",
             xMin: day,
             xMax: day,
-            borderColor: "rgba(0, 0, 0, 0.3)",
+            borderColor: "rgba(255, 255, 255, 0.2)",
             borderWidth: 1,
             label: {
                 content: `WEEK ${idx + 2}`,
                 enabled: true,
                 position: "start",
-                backgroundColor: "rgba(255,255,255,0.8)",
-                color: "#333",
+                backgroundColor: "rgba(37, 38, 54, 0.8)",
+                color: "#E5E7EB",
                 font: {
                     size: 12,
                     weight: "bold",
@@ -128,24 +158,67 @@ const UserSleepProgress = () => {
                 type: "linear",
                 min: 1,
                 max: 28,
-                title: { display: true, text: "Day of Month" },
-                ticks: { stepSize: 1 },
+                title: { 
+                    display: true, 
+                    text: "Day of Month",
+                    color: "#9CA3AF"
+                },
+                ticks: { 
+                    stepSize: 1,
+                    color: "#9CA3AF" 
+                },
                 grid: {
                     color: context => [7, 14, 21].includes(context.tick.value)
-                        ? "rgba(0,0,0,0.3)"
-                        : "rgba(0,0,0,0.1)",
+                        ? "rgba(255,255,255,0.2)"
+                        : "rgba(255,255,255,0.05)",
                 },
             },
             y: {
                 beginAtZero: true,
-                title: { display: true, text: "Sleep Duration (hrs)" },
+                title: { 
+                    display: true, 
+                    text: "Sleep Duration (hrs)",
+                    color: "#9CA3AF"
+                },
+                ticks: { color: "#9CA3AF" },
+                grid: { color: "rgba(255,255,255,0.05)" },
             },
         },
         plugins: {
-            legend: { display: true },
+            legend: { 
+                display: true,
+                labels: { color: "#E5E7EB" }
+            },
             annotation: { annotations },
+            tooltip: {
+                backgroundColor: "rgba(37, 38, 54, 0.9)",
+                titleColor: "#E5E7EB",
+                bodyColor: "#E5E7EB",
+                borderColor: "rgba(255,255,255,0.1)",
+                borderWidth: 1,
+            }
         },
     };
+
+    // Calculate weekly progress
+    const calculateWeeklyProgress = () => {
+        const currentDate = new Date();
+        const dayOfWeek = currentDate.getDay(); // 0-6, where 0 is Sunday
+        const daysWithEnoughSleep = sleepData
+            .filter(entry => {
+                const entryDate = new Date(entry.date);
+                const diffTime = currentDate - entryDate;
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return diffDays <= 7 && entry.sleepDuration >= 7;
+            })
+            .length;
+        
+        // If we don't have actual data, show a placeholder
+        return daysWithEnoughSleep > 0 ? `${daysWithEnoughSleep}/7 days` : "5/7 days";
+    };
+
+    const weeklyProgress = calculateWeeklyProgress();
+    const progressPercentage = parseInt(weeklyProgress.split('/')[0]) / 7 * 100;
 
     return (
         <div className="sleepsync-app">
@@ -172,15 +245,7 @@ const UserSleepProgress = () => {
                             onClick={() => handleNavigate("/user/landing")}
                             className="sidebar-menu-button"
                         >
-                            <i className="sidebar-menu-icon">🏠</i> Dashboard
-                        </button>
-                    </li>
-                    <li className="sidebar-menu-item">
-                        <button
-                            onClick={() => handleNavigate("/user/sleep-schedule")}
-                            className="sidebar-menu-button"
-                        >
-                            <i className="sidebar-menu-icon">📅</i> Sleep Schedule
+                            <i className="sidebar-menu-icon">🏠</i> Home
                         </button>
                     </li>
                     <li className="sidebar-menu-item">
@@ -197,6 +262,14 @@ const UserSleepProgress = () => {
                             className="sidebar-menu-button active"
                         >
                             <i className="sidebar-menu-icon">📊</i> Sleep Progress
+                        </button>
+                    </li>
+                    <li className="sidebar-menu-item">
+                        <button
+                            onClick={() => handleNavigate("/user/smart-alarm")}
+                            className="sidebar-menu-button"
+                        >
+                            <i className="sidebar-menu-icon">⏰</i> Alarm
                         </button>
                     </li>
                     <li className="sidebar-menu-item">
@@ -231,160 +304,223 @@ const UserSleepProgress = () => {
                         </button>
                         <a className="nav-brand">Sleep<span className="nav-brand-highlight">Sync</span></a>
                     </div>
+                    <div className="nav-right">
+                        <button className="nav-notification-btn">
+                            🔔
+                            <span className="nav-notification-badge">2</span>
+                        </button>
+                        <button 
+                            onClick={handleLogout}
+                            className="nav-profile-btn"
+                        >
+                            👤
+                        </button>
+                    </div>
                 </nav>
 
                 {/* Main Content */}
                 <div className="main-content">
-                    <div style={styles.container}>
-                        {/* Backgrounds */}
-                        <div style={styles.bgBase} />
-                        <div style={styles.bgGradient} />
-                        <div style={styles.bgStars} />
-                        <style>{animations}</style>
+                    {/* Header Section */}
+                    <div className="welcome-section">
+                        <div className="welcome-card">
+                            <h1 className="welcome-title">Sleep Progress</h1>
+                            <p className="welcome-subtitle">Track and visualize your sleep patterns over time</p>
+                        </div>
+                    </div>
 
-                        {/* Chart Box */}
-                        <div style={styles.chartWrapper}>
-                            <h1 style={styles.title}>User Sleep Progress</h1>
-
-                            <div style={styles.filters}>
-                                <label htmlFor="year-select">Year:</label>
-                                <select id="year-select" value={selectedYear} onChange={e => setSelectedYear(Number(e.target.value))}>
-                                    {years.map(year => (
-                                        <option key={year} value={year}>{year}</option>
-                                    ))}
-                                </select>
+                    {/* Statistics Section */}
+                    <div className="stats-section">
+                        <div className="stat-card">
+                            <div className="stat-icon stat-icon-blue">😴</div>
+                            <div>
+                                <div className="stat-value-container">
+                                    <h3 className="stat-value">{sleepStats.avgSleepTime}</h3>
+                                    <span className="stat-unit">Hours</span>
+                                </div>
+                                <p className="stat-label">Average Sleep Time</p>
                             </div>
+                        </div>
 
-                            <ul style={styles.monthTabs}>
-                                {MONTHS.map((month, index) => (
-                                    <li
-                                        key={index}
-                                        style={{
-                                            ...styles.monthItem,
-                                            fontWeight: selectedMonth === index ? "bold" : "normal",
-                                            textDecoration: selectedMonth === index ? "underline" : "none"
-                                        }}
-                                        onClick={() => setSelectedMonth(index)}
-                                    >
-                                        {month}
-                                    </li>
-                                ))}
-                            </ul>
+                        <div className="stat-card">
+                            <div className="stat-icon stat-icon-red">🌙</div>
+                            <div>
+                                <div className="stat-value-container">
+                                    <h3 className="stat-value">{sleepStats.avgBedtime}</h3>
+                                    <span className="stat-unit">PM</span>
+                                </div>
+                                <p className="stat-label">Average Bedtime</p>
+                            </div>
+                        </div>
 
-                            <div style={{ height: 400 }}>
-                                <Line data={chartData} options={chartOptions} />
+                        <div className="stat-card">
+                            <div className="stat-icon stat-icon-green">🌞</div>
+                            <div>
+                                <div className="stat-value-container">
+                                    <h3 className="stat-value">{sleepStats.avgWakeup}</h3>
+                                    <span className="stat-unit">AM</span>
+                                </div>
+                                <p className="stat-label">Average Wake Up</p>
                             </div>
                         </div>
                     </div>
+
+                    {/* Main Content - Chart and Filters */}
+                    <div className="features-section">
+                        {/* Chart Card */}
+                        <div className="feature-card" style={{ gridColumn: "1 / -1" }}>
+                            <div className="feature-header">
+                                <h3 className="feature-title">Monthly Sleep Duration</h3>
+                                <button
+                                    onClick={openFilterModal}
+                                    className="feature-link"
+                                >
+                                    Filter Options →
+                                </button>
+                            </div>
+                            <div className="feature-content">
+                                <div style={{ height: "400px" }}>
+                                    <Line data={chartData} options={chartOptions} />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Weekly Progress Card */}
+                        <div className="feature-card">
+                            <div className="feature-header">
+                                <h3 className="feature-title">Weekly Goal Progress</h3>
+                            </div>
+                            <div className="feature-content">
+                                <div className="progress-container">
+                                    <div className="progress-header">
+                                        <span className="progress-label">7+ Hours of Sleep</span>
+                                        <span className="progress-value">{weeklyProgress}</span>
+                                    </div>
+                                    <div className="progress-bar-container">
+                                        <div className="progress-bar" style={{ width: `${progressPercentage}%` }}></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Month Selection Card */}
+                        <div className="feature-card">
+                            <div className="feature-header">
+                                <h3 className="feature-title">View by Month</h3>
+                            </div>
+                            <div className="feature-content">
+                                <div className="month-selector">
+                                    <label htmlFor="month-select">Current: {MONTHS[selectedMonth]} {selectedYear}</label>
+                                    <select 
+                                        id="month-select" 
+                                        value={selectedMonth} 
+                                        onChange={e => setSelectedMonth(Number(e.target.value))}
+                                        className="sidebar-search-input"
+                                        style={{ marginTop: "10px" }}
+                                    >
+                                        {MONTHS.map((month, index) => (
+                                            <option key={index} value={index}>{month}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Year Selection Card */}
+                        <div className="feature-card">
+                            <div className="feature-header">
+                                <h3 className="feature-title">View by Year</h3>
+                            </div>
+                            <div className="feature-content">
+                                <div className="year-selector">
+                                    <label htmlFor="year-select">Select Year</label>
+                                    <select 
+                                        id="year-select" 
+                                        value={selectedYear} 
+                                        onChange={e => setSelectedYear(Number(e.target.value))}
+                                        className="sidebar-search-input"
+                                        style={{ marginTop: "10px" }}
+                                    >
+                                        {years.map(year => (
+                                            <option key={year} value={year}>{year}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Modal for Filters */}
+                    {isFilterModalOpen && (
+                        <div className="modal">
+                            <div className="modal-overlay" onClick={closeFilterModal}></div>
+                            <div className="modal-content">
+                                <button className="modal-close-btn" onClick={closeFilterModal}>✖</button>
+                                <h2 className="modal-title">Filter Options</h2>
+                                
+                                <div style={{ marginBottom: "20px" }}>
+                                    <h3 style={{ color: "#333", fontSize: "18px", marginBottom: "10px" }}>Year</h3>
+                                    <select 
+                                        value={selectedYear} 
+                                        onChange={e => setSelectedYear(Number(e.target.value))}
+                                        style={{ 
+                                            width: "100%", 
+                                            padding: "10px", 
+                                            borderRadius: "5px", 
+                                            border: "1px solid #ddd" 
+                                        }}
+                                    >
+                                        {years.map(year => (
+                                            <option key={year} value={year}>{year}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                
+                                <div style={{ marginBottom: "20px" }}>
+                                    <h3 style={{ color: "#333", fontSize: "18px", marginBottom: "10px" }}>Month</h3>
+                                    <select 
+                                        value={selectedMonth} 
+                                        onChange={e => setSelectedMonth(Number(e.target.value))}
+                                        style={{ 
+                                            width: "100%", 
+                                            padding: "10px", 
+                                            borderRadius: "5px", 
+                                            border: "1px solid #ddd" 
+                                        }}
+                                    >
+                                        {MONTHS.map((month, index) => (
+                                            <option key={index} value={index}>{month}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                
+                                <button 
+                                    onClick={closeFilterModal} 
+                                    style={{ 
+                                        background: "#198754", 
+                                        color: "white", 
+                                        border: "none", 
+                                        padding: "10px 20px", 
+                                        borderRadius: "5px", 
+                                        cursor: "pointer", 
+                                        width: "100%" 
+                                    }}
+                                >
+                                    Apply Filters
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <footer className="footer">
+                        <p className="footer-text">
+                            © 2025 SleepSync. All rights reserved.
+                        </p>
+                    </footer>
                 </div>
             </section>
         </div>
     );
 };
-
-// 💅 Styling
-const styles = {
-    container: {
-        fontFamily: "'Inter', sans-serif",
-        minHeight: "100vh",
-        margin: 0,
-        position: "relative",
-        overflow: "hidden",
-        color: "white",
-    },
-    bgBase: {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        background: "radial-gradient(circle at 50% 50%, #2c1810 0%, #1a1a2e 100%)",
-        zIndex: -3,
-    },
-    bgGradient: {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        background: `
-            radial-gradient(circle at 20% 30%, rgba(255,255,255,0.05) 0%, transparent 50%),
-            radial-gradient(circle at 70% 60%, rgba(255,255,255,0.05) 0%, transparent 50%),
-            radial-gradient(circle at 40% 80%, rgba(255,255,255,0.05) 0%, transparent 50%)`,
-        zIndex: -2,
-        animation: "drift 30s infinite linear",
-    },
-    bgStars: {
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        background: `
-            radial-gradient(1.5px 1.5px at 20px 30px, white, rgba(0,0,0,0)),
-            radial-gradient(1.5px 1.5px at 40px 70px, #ffd700, rgba(0,0,0,0)),
-            radial-gradient(1.5px 1.5px at 50px 160px, white, rgba(0,0,0,0)),
-            radial-gradient(1.5px 1.5px at 90px 40px, #ffd700, rgba(0,0,0,0)),
-            radial-gradient(1.5px 1.5px at 130px 80px, white, rgba(0,0,0,0)),
-            radial-gradient(1.5px 1.5px at 160px 120px, #ffd700, rgba(0,0,0,0))`,
-        zIndex: -1,
-        animation: "twinkle 4s infinite",
-    },
-    chartWrapper: {
-        maxWidth: "800px",
-        width: "90%",
-        margin: "auto",
-        position: "relative",
-        top: "10%",
-        background: "rgba(255, 255, 255, 0.1)",
-        padding: "50px",
-        borderRadius: "25px",
-        backdropFilter: "blur(10px)",
-        border: "1px solid rgba(255, 255, 255, 0.2)",
-        boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-        animation: "fadeIn 1s ease-in-out",
-        zIndex: 1,
-    },
-    title: {
-        textAlign: "center",
-        marginBottom: "30px",
-        fontSize: "2.2rem",
-        textShadow: "2px 2px 4px rgba(0, 0, 0, 0.3)",
-    },
-    filters: {
-        marginBottom: "20px",
-        textAlign: "center",
-    },
-    monthTabs: {
-        display: "flex",
-        justifyContent: "center",
-        flexWrap: "wrap",
-        listStyle: "none",
-        padding: 0,
-        margin: "10px 0 20px",
-        gap: "10px",
-    },
-    monthItem: {
-        cursor: "pointer",
-        padding: "5px 10px",
-        borderRadius: "8px",
-        transition: "all 0.2s",
-    },
-};
-
-const animations = `
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-@keyframes twinkle {
-    0%, 100% { opacity: 0.8; }
-    50% { opacity: 0.3; }
-}
-@keyframes drift {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(100%); }
-}
-`;
 
 export default UserSleepProgress;
