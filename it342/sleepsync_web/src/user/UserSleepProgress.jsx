@@ -201,7 +201,7 @@ const UserSleepProgress = () => {
                     </li>
                     <li className="sidebar-menu-item">
                         <button
-                            onClick={() => handleNavigate("/sleep-tips")}
+                            onClick={() => handleNavigate("/user/sleep-tips")}
                             className="sidebar-menu-button"
                         >
                             <i className="sidebar-menu-icon">💡</i> Sleep Tips

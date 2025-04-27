@@ -508,7 +508,7 @@
     font-size: 24px;
     font-weight: bold;
     margin-bottom: 15px;
-    color: #333;
+    color: #cfb7b7;
     text-align: center;
   }
   
@@ -516,6 +516,7 @@
     list-style: none;
     padding: 0;
     margin: 0;
+    
   }
   
   .sleep-record-item {
@@ -533,7 +534,7 @@
   
   .record-time {
     font-weight: bold;
-    color: #333;
+    color: #cfb7b7;
   }
   
   .record-quality {

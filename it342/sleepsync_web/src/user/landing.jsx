@@ -8,6 +8,9 @@ const Landing = () => {
     const [sidebarVisible, setSidebarVisible] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
+    // Mock user data for demonstration
+    const user = { name: "James" };
+
     const handleLogout = () => {
         logoutUser(navigate);
     };
@@ -82,7 +85,7 @@ const Landing = () => {
                     </li>
                     <li className="sidebar-menu-item">
                         <button
-                            onClick={() => handleNavigate("/sleep-tips")}
+                            onClick={() => handleNavigate("/user/sleep-tips")}
                             className="sidebar-menu-button"
                         >
                             <i className="sidebar-menu-icon">💡</i> Sleep Tips
@@ -131,7 +134,7 @@ const Landing = () => {
                     {/* Welcome Section */}
                     <div className="welcome-section">
                         <div className="welcome-card">
-                            <h1 className="welcome-title">Welcome to SleepSync Dashboard</h1>
+                            <h1 className="welcome-title">Hello {user.name}! Welcome to SleepSync</h1>
                             <p className="welcome-subtitle">Your journey to better sleep starts here. Track and improve your sleep patterns.</p>
                         </div>
                     </div>
@@ -263,7 +266,7 @@ const Landing = () => {
                             <div className="feature-header">
                                 <h3 className="feature-title">Sleep Tips</h3>
                                 <button
-                                    onClick={() => handleNavigate("/sleep-tips")}
+                                    onClick={() => handleNavigate("/user/sleep-tips")}
                                     className="feature-link"
                                 >
                                     More Tips →
@@ -280,7 +283,7 @@ const Landing = () => {
                                 </div>
                             </div>
                             <button
-                                onClick={() => handleNavigate("/sleep-tips")}
+                                onClick={() => handleNavigate("/user/sleep-tips")}
                                 className="action-button yellow-button"
                             >
                                 Explore Tips

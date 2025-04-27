@@ -240,7 +240,7 @@ const RecordSleep = () => {
                     </li>
                     <li className="sidebar-menu-item">
                         <button
-                            onClick={() => handleNavigate("/sleep-tips")}
+                            onClick={() => handleNavigate("/user/sleep-tips")}
                             className="sidebar-menu-button"
                         >
                             <i className="sidebar-menu-icon">💡</i> Sleep Tips
@@ -290,7 +290,16 @@ const RecordSleep = () => {
                     </div>
                 </div>
 
-                <SleepModal {...{ isModalOpen, closeModal: () => setIsModalOpen(false), activeTab, setActiveTab, renderTabContent }} />
+                <SleepModal 
+                    {...{ 
+                        isModalOpen, 
+                        closeModal: () => setIsModalOpen(false), 
+                        activeTab, 
+                        setActiveTab, 
+                        renderTabContent 
+                    }} 
+                    style={{ width: '80%', height: '90%' }} // Adjust modal size
+                />
             </section>
         </div>
     );

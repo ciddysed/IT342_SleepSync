@@ -9,6 +9,7 @@ import UserSleepProgress from "./user/UserSleepProgress"; // Import UserSleepPro
 import AlarmClock from "./user/components/AlarmClock";
 import SmartAlarm from "./user/SmartAlarm"; // Import SmartAlarm
 import ProtectedRoute from "./components/ProtectedRoute";
+import SleepTips from "./user/SleepTips";
 
 const App = () => {
     return (
@@ -22,6 +23,7 @@ const App = () => {
                 <Route path="/user/sleep-progress" element={<ProtectedRoute><UserSleepProgress /></ProtectedRoute>} /> {/* Add UserSleepProgress path */}
                 <Route path="/user/alarm-clock" element={<AlarmClock />} />
                 <Route path="/user/smart-alarm" element={<ProtectedRoute><SmartAlarm /></ProtectedRoute>} /> {/* Add SmartAlarm route */}
+                <Route path="/user/sleep-tips" element={<SleepTips />} />
                 <Route path="*" element={<div>Page not found</div>} /> {/* Fallback route */}
             </Routes>
         </Router>
