@@ -1,3 +1,4 @@
+// User.java
 package com.it342.sleepsync.Entity;
 
 import java.util.List;

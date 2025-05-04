@@ -1,4 +1,4 @@
-// File: com/it342/sleepsync/Config/PasswordEncoderConfig.java
+// PasswordEncoderConfig.java
 package com.it342.sleepsync.Config;
 
 import org.springframework.context.annotation.Bean;

@@ -1,7 +1,9 @@
+// UserRepository.java
 package com.it342.sleepsync.Repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
+
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.it342.sleepsync.Entity.User;
 
