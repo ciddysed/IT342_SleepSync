@@ -4,8 +4,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Transactional; // ✅ Add this import
 
 import com.it342.sleepsync.Entity.User;
 import com.it342.sleepsync.Repository.UserRepository;
@@ -16,6 +17,9 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder; // ✅ Inject password encoder
+
     @Transactional
     public User createUser(User user) {
         try {
@@ -23,6 +27,10 @@ public class UserService {
             if (user.getEmail() == null || user.getPassword() == null) {
                 throw new IllegalArgumentException("Email and password are required.");
             }
+
+            // ✅ Hash password before saving
+            user.setPassword(passwordEncoder.encode(user.getPassword()));
+            
             // Save user and cascade relationships
             return userRepository.save(user);
         } catch (Exception e) {
@@ -58,7 +66,8 @@ public class UserService {
 
     public Optional<User> validateLogin(String email, String password) {
         Optional<User> user = userRepository.findByEmail(email);
-        if (user.isPresent() && user.get().getPassword().equals(password)) {
+        if (user.isPresent() && passwordEncoder.matches(password, user.get().getPassword()))
+ {
             return user;
         }
         return Optional.empty();

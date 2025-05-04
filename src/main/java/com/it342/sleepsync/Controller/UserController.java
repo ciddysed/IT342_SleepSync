@@ -1,15 +1,24 @@
+// UserController.java
 package com.it342.sleepsync.Controller;
 
-import java.util.List;
-import java.util.Optional;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import com.it342.sleepsync.DTO.LoginRequest;
 import com.it342.sleepsync.Entity.User;
 import com.it342.sleepsync.Service.UserService;
 import com.it342.sleepsync.Util.JwtUtil;
@@ -59,17 +68,15 @@ public class UserController {
     }
 
 
-    @GetMapping("/login")
-    public ResponseEntity<?> loginUser(
-            @RequestParam String email,
-            @RequestParam String password) {
+    @PostMapping("/login")
+    public ResponseEntity<?> loginUser(@RequestBody LoginRequest request) {
         try {
-            Optional<User> user = userService.validateLogin(email, password);
+            Optional<User> user = userService.validateLogin(request.getEmail(), request.getPassword());
             if (user.isPresent()) {
-                String token = JwtUtil.generateToken(user.get().getEmail()); // Generate JWT token
+                String token = JwtUtil.generateToken(user.get().getEmail());
                 Map<String, Object> response = new HashMap<>();
                 response.put("user", user.get());
-                response.put("token", token); // Include token in the response
+                response.put("token", token);
                 return ResponseEntity.ok(response);
             } else {
                 return ResponseEntity.status(401).body("Invalid email or password.");
