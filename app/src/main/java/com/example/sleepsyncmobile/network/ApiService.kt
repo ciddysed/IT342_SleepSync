@@ -1,5 +1,7 @@
+// ApiService.kt
 package com.example.sleepsyncmobile.network
 
+import com.example.sleepsyncmobile.model.LoginRequest
 import com.example.sleepsyncmobile.model.LoginResponse
 import com.example.sleepsyncmobile.model.SleepSchedule
 import com.example.sleepsyncmobile.model.User
@@ -8,11 +10,8 @@ import retrofit2.http.*
 
 interface ApiService {
     // Authentication Endpoints
-    @GET("/users/login")
-    suspend fun loginUser(
-        @Query("email") email: String,
-        @Query("password") password: String
-    ): Response<LoginResponse>
+    @POST("/users/login")
+    suspend fun loginUser(@Body loginRequest: LoginRequest): Response<LoginResponse>
 
     @POST("/users")
     suspend fun registerUser(@Body user: User): Response<User>

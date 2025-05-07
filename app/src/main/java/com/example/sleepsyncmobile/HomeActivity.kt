@@ -100,6 +100,7 @@ class HomeActivity : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun updateSleepSummaryUI(averageSleep: Double, sleepQuality: String) {
         runOnUiThread {
             sleepDurationText.text = "Average Sleep: %.1f hours".format(averageSleep)
@@ -189,7 +190,7 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private fun navigateToSleepProgress() {
-        val intent = Intent(this, SleepProgressActivity::class.java)
+        val intent = Intent(this, SleepDetailsActivity::class.java)
         startActivity(intent)
     }
 

@@ -32,7 +32,9 @@ xmlns:tools="http://schemas.android.com/tools">
     <activity android:name=".SleepScheduleActivity" android:exported="true" />
     <activity android:name=".SleepTipsActivity" android:exported="true" />
     <activity android:name=".RecordSleepActivity" android:exported="true" />
-    <activity android:name=".SleepDetailsActivity" android:exported="false" />
+    <activity android:name=".SleepDetailsActivity" android:exported="true" />
+    <activity android:name=".SleepProgressActivity" android:exported="true"
+        tools:ignore="Instantiatable" />
 
 </application>
 

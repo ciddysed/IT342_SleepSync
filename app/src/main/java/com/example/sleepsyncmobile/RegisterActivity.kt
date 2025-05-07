@@ -1,3 +1,4 @@
+// RegisterActivity.kt
 package com.example.sleepsyncmobile
 
 import RegisterScreenUI

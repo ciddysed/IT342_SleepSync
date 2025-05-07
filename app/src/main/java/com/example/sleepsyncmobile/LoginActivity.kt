@@ -1,3 +1,4 @@
+// LoginActivity.kt
 package com.example.sleepsyncmobile
 
 import android.annotation.SuppressLint
@@ -17,6 +18,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.core.content.edit
+import com.example.sleepsyncmobile.model.LoginRequest
 
 class LoginActivity : ComponentActivity() {
     @SuppressLint("UseKtx")
@@ -36,7 +38,8 @@ class LoginActivity : ComponentActivity() {
                     onLoginClick = {
                         CoroutineScope(Dispatchers.IO).launch {
                             try {
-                                val response = RetrofitClient.apiService.loginUser(email, password)
+                                val loginRequest = LoginRequest(email, password)
+                                val response = RetrofitClient.apiService.loginUser(loginRequest)
                                 withContext(Dispatchers.Main) {
                                     if (response.isSuccessful && response.body() != null) {
                                         val loginResponse = response.body() // This is LoginResponse

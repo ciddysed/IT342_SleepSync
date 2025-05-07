@@ -36,14 +36,14 @@ android {
             buildConfigField("String", "BASE_URL", "\"http://192.168.254.159:8080\"") // Local testing URL
         }
         getByName("release") {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
-            buildConfigField("String", "BASE_URL", "\"https://your-production-api.com/\"") // Production URL
+            buildConfigField("String", "BASE_URL", "\"https://sleepsync.onrender.com\"") // Production URL
         }
     }
 
